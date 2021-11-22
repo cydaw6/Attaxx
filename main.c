@@ -7,6 +7,25 @@
 #define SYMBOL_1 'o'
 #define SYMBOL_2 'x'
 
+/**
+ * @brief Le mode graphique du jeu
+ * ligne de commande ou interface 
+ * graphique.
+ */
+enum G_MODE {
+    CLI = 0,
+    GUI = 1
+};
+
+/**
+ * @brief 
+ * 
+ */
+enum J_MODE {
+    HH = 0,
+    HJ = 1
+};
+
 // clang -Wall -Wfatal-errors -std=c17 main.c -o main
 
 typedef struct {
@@ -27,7 +46,7 @@ typedef struct {
  * 
  * @return Plateau* 
  */
-Plateau *creer_plateau() {
+Plateau *creer_plateau(Joueur *joueur_1, Joueur *joueur_2) {
     Plateau *plateau;
     int i, j;
     if ((plateau = (Plateau *)malloc(sizeof(Plateau))) == NULL) {
@@ -45,14 +64,6 @@ Plateau *creer_plateau() {
         }
     }
     return plateau;
-}
-
-/**
- * @brief 
- * 
- * @param plateau 
- */
-void init_plateau(Plateau *plateau) {
 }
 
 void affiche_plateau_ascii(Plateau plateau) {
@@ -94,11 +105,12 @@ Joueur *make_joueur(char nom[TAILLE_MAX_NOM], char symbol, int score) {
 int main(int argc, char *argv[]) {
 
     Plateau *plateau = NULL;
+    G_MODE
     Joueur *joueur_1 = NULL;
     Joueur *joueur_2 = NULL;
     char nom[TAILLE_MAX_NOM];
 
-    /*               OPTIONS                */
+    /*           TRAITEMENT OPTIONS            */
     //options disponibles
     char etat_options[128] = {0};
     // index de l'argument
@@ -140,10 +152,12 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    /*               OPTIONS                */
+    /*               JEU                */
 
     if ((etat_options[(int)'a'])) {
+
         printf("Affichage ASCII.\n");
+
     } else if ((etat_options[(int)'g'])) {
         printf("Affichage graphique.\n");
     } else {
@@ -152,6 +166,7 @@ int main(int argc, char *argv[]) {
     }
 
     if ((etat_options[(int)'h'])) {
+
         printf("Deux joueurs humains.\n");
 
         do {
@@ -172,8 +187,10 @@ int main(int argc, char *argv[]) {
 
     } else if ((etat_options[(int)'o'])) {
         printf("Humain contre ordinateur.\n");
+
     } else {
         printf("Erreur option manquante.\n");
+
         return 1;
     }
 
