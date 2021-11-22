@@ -8,25 +8,24 @@
 #define SYMBOL_2 'x'
 
 /**
- * @brief Le mode graphique du jeu
+ * @brief L'interface du jeu
  * ligne de commande ou interface 
  * graphique.
  */
-enum G_MODE {
+typedef enum {
     CLI = 0,
     GUI = 1
-};
+} MODE_I;
 
 /**
- * @brief 
- * 
+ * @brief Le mode de jeu
+ * Humain vs Humain
+ * Humain vs Ordi
  */
-enum J_MODE {
+typedef enum {
     HH = 0,
-    HJ = 1
-};
-
-// clang -Wall -Wfatal-errors -std=c17 main.c -o main
+    HO = 1
+} MODE_J;
 
 typedef struct {
     char nom[TAILLE_MAX_NOM];
@@ -105,70 +104,51 @@ Joueur *make_joueur(char nom[TAILLE_MAX_NOM], char symbol, int score) {
 int main(int argc, char *argv[]) {
 
     Plateau *plateau = NULL;
-    G_MODE
+    // par défaut en ASCII
+    MODE_I interface = CLI;
+    // par défaut humain vs ordi
+    MODE_J mode_de_jeu = HO;
     Joueur *joueur_1 = NULL;
     Joueur *joueur_2 = NULL;
     char nom[TAILLE_MAX_NOM];
 
     /*           TRAITEMENT OPTIONS            */
-    //options disponibles
-    char etat_options[128] = {0};
     // index de l'argument
     int i = 1;
     // pointeur sur la chaine de l'argument
     char *str_option;
-
-    // options par défaut
-    etat_options[(int)'g'] = 0;
-
+    // iteration sur les arguments
     for (; i < argc; i++) {
         str_option = argv[i];
+        // si est une option
         if (*str_option == '-') {
             str_option++;
-
+            // iteration sur la chaine de l'argument
             for (; *str_option; str_option++) {
-
                 // enregistre choix option
-                if (*str_option == 'a') {
-                    etat_options[(int)(*str_option)] = 1;
-                    etat_options[(int)'g'] = 0;
+                switch (*str_option) {
+                case 'a':
+                    interface = CLI;
+                    break;
+                case 'g':
+                    interface = GUI;
+                    break;
+                case 'h':
+                    mode_de_jeu = HH;
+                    break;
+                case 'o':
+                    mode_de_jeu = HO;
+                    break;
+                default:
+                    continue;
                 }
-                //
-                if (*str_option == 'g') {
-                    etat_options[(int)(*str_option)] = 1;
-                    etat_options[(int)'a'] = 0;
-                }
-                if (*str_option == 'h') {
-                    etat_options[(int)(*str_option)] = 1;
-                    etat_options[(int)'o'] = 0;
-                }
-                if (*str_option == 'o') {
-                    etat_options[(int)(*str_option)] = 1;
-                    etat_options[(int)'h'] = 0;
-                }
-
-                etat_options[(int)(*str_option)] = 1;
             }
         }
     }
 
     /*               JEU                */
-
-    if ((etat_options[(int)'a'])) {
-
-        printf("Affichage ASCII.\n");
-
-    } else if ((etat_options[(int)'g'])) {
-        printf("Affichage graphique.\n");
-    } else {
-        printf("Erreur option manquante.\n");
-        return 1;
-    }
-
-    if ((etat_options[(int)'h'])) {
-
-        printf("Deux joueurs humains.\n");
-
+    switch (mode_de_jeu) {
+    case HH:
         do {
             printf("Quel est le nom du premier joueur (symbol %c) : ", SYMBOL_1);
             scanf("%20s", nom);
@@ -181,18 +161,17 @@ int main(int argc, char *argv[]) {
             printf("\n");
         } while ((joueur_2 = make_joueur(nom, SYMBOL_1, 0)) == NULL);
 
-        if ((plateau = creer_plateau()) == NULL)
+        if ((plateau = creer_plateau(joueur_1, joueur_2)) == NULL)
             return 1;
         affiche_plateau_ascii(*plateau);
 
-    } else if ((etat_options[(int)'o'])) {
-        printf("Humain contre ordinateur.\n");
-
-    } else {
-        printf("Erreur option manquante.\n");
-
+        break;
+    case HO:
+        break;
+    default:
         return 1;
     }
 
     return 0;
 }
+// clang -Wall -Wfatal-errors -std=c17 main.c -o main
