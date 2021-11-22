@@ -101,6 +101,21 @@ Joueur *make_joueur(char nom[TAILLE_MAX_NOM], char symbol, int score) {
     return NULL;
 }
 
+int lire_nom(char *dest, int taille) {
+    char r = 'a';
+    int readcount = 0;
+
+    for (int i = 0; i < TAILLE_MAX_NOM; i++) {
+        r = fgetc(stdin);
+        if ((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'z') || (r >= '0' && r <= '9')) {
+            dest[i] = r;
+        } else {
+            return readcount;
+        }
+    }
+    return readcount;
+}
+
 int main(int argc, char *argv[]) {
 
     Plateau *plateau = NULL;
@@ -149,21 +164,24 @@ int main(int argc, char *argv[]) {
     /*               JEU                */
     switch (mode_de_jeu) {
     case HH:
+        // La consigne du #define TAILLE_MAX_NOM 20 m'embête
+        //
         do {
             printf("Quel est le nom du premier joueur (symbol %c) : ", SYMBOL_1);
-            scanf("%20s", nom);
+            lire_nom(nom, TAILLE_MAX_NOM);
             printf("\n");
         } while ((joueur_1 = make_joueur(nom, SYMBOL_1, 0)) == NULL);
 
         do {
-            printf("Quel est le nom du premier joueur (symbol %c) : ", SYMBOL_2);
-            scanf("%20s", nom);
+            printf("Quel est le nom du second joueur (symbol %c) : ", SYMBOL_2);
+            lire_nom(nom, TAILLE_MAX_NOM);
             printf("\n");
         } while ((joueur_2 = make_joueur(nom, SYMBOL_1, 0)) == NULL);
 
         if ((plateau = creer_plateau(joueur_1, joueur_2)) == NULL)
             return 1;
         affiche_plateau_ascii(*plateau);
+        printf("\n");
 
         break;
     case HO:
