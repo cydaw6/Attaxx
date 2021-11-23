@@ -17,6 +17,7 @@
 #define SYMBOL_2 'x'
 #define VIDE '.'
 #define BORD '*'
+#define BUFFER 500
 
 /**
  * @brief L'interface du jeu.
@@ -197,6 +198,13 @@ Joueur *make_joueur(char nom[TAILLE_MAX_NOM], char symbol, int score) {
     return NULL;
 }
 
+void vider_buffer() {
+    int x = 0;
+    while (x != '\n' && x) {
+        x = getchar();
+    }
+}
+
 /**
  * @brief Y'a un bleme avec cette fonction
  *  si jamais on laisse des espace /tabulations etc ça fait de la merde
@@ -207,25 +215,37 @@ Joueur *make_joueur(char nom[TAILLE_MAX_NOM], char symbol, int score) {
  * @return int 
  */
 int lire_nom(char *dest, int taille) {
+    char *cr = NULL;
+    if (fgets(dest, taille, stdin)) {
+        // on chercher le retour chariot
+        if ((cr = strchr(dest, '\n'))) {
+            *cr = '\0';
+        } else { // sinon il reste des char dans le buffer
+            vider_buffer();
+        }
+        return 1;
+    }
+    vider_buffer();
+    return 0;
 
-    // char r = 'a';
-    // int readcount = 0;
+    // // char r = 'a';
+    // // int readcount = 0;
 
-    // for (int i = 0; i < TAILLE_MAX_NOM; i++) {
-    //     r = fgetc(stdin);
-    //     if (
-    //         (r >= 'a' && r <= 'z') ||
-    //         (r >= 'A' && r <= 'z') ||
-    //         (r >= '0' && r <= '9')) {
-    //         dest[i] = r;
-    //     } else {
-    //         return readcount;
-    //     }
-    // }
+    // // for (int i = 0; i < TAILLE_MAX_NOM; i++) {
+    // //     r = fgetc(stdin);
+    // //     if (
+    // //         (r >= 'a' && r <= 'z') ||
+    // //         (r >= 'A' && r <= 'z') ||
+    // //         (r >= '0' && r <= '9')) {
+    // //         dest[i] = r;
+    // //     } else {
+    // //         return readcount;
+    // //     }
+    // // }
 
-    //return readcount;
+    // //return readcount;
 
-    return scanf(" %20s", dest);
+    // return scanf(" %20s", dest);
 }
 
 int main(int argc, char *argv[]) {
