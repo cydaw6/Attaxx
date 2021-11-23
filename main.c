@@ -120,25 +120,30 @@ int ajouter_pion(Plateau *plateau, int pi, int pj, char symbol) {
 
     int adverses = 0;
     int i, j;
+
     // vérifications des pions adjacents
     for (i = pi - 1; i <= pi + 1; i++) {
         for (j = pj - 1; j <= pj + 1; j++) {
+
             if (
-                i != pi && j != pj && plateau->plateau[i][j] != VIDE && plateau->plateau[i][j] != symbol && plateau->plateau[i][j] != BORD) {
+                plateau->plateau[i][j] != VIDE && plateau->plateau[i][j] != symbol && plateau->plateau[i][j] != BORD) {
                 adverses += 1;
             }
         }
     }
+
     if (adverses == 0)
         return 0;
-    // On change de symbole les pions adjacents
+
+    // Changement de symbole les pions adjacents
     for (i = pi - 1; i <= pi + 1; i++) {
         for (j = pj - 1; j <= pj + 1; j++) {
-            if (i != pi && j != pj && plateau->plateau[i][j] != VIDE && plateau->plateau[i][j] != BORD) {
+            if (plateau->plateau[i][j] != VIDE && plateau->plateau[i][j] != BORD) {
                 plateau->plateau[i][j] = symbol;
             }
         }
     }
+    plateau->plateau[pi][pj] = symbol;
     return adverses + 1;
 }
 
@@ -172,7 +177,7 @@ int jouer(Plateau *plateau) {
             printf(
                 "Score actuel : %s(%c) %d", joueur->nom, joueur->symbol, joueur->score);
             printf(
-                " - %s(%c) %d\n", plateau->joueurs[numj]->nom, plateau->joueurs[numj]->symbol, plateau->joueurs[numj]->score);
+                " - %s(%c) %d\n\n", plateau->joueurs[numj]->nom, plateau->joueurs[numj]->symbol, plateau->joueurs[numj]->score);
         }
     }
     return 0;
@@ -206,12 +211,10 @@ void vider_buffer() {
 }
 
 /**
- * @brief Y'a un bleme avec cette fonction
- *  si jamais on laisse des espace /tabulations etc ça fait de la merde
- * faudrait trouver le moyene de clear stdin ou une autre manière
- * 
- * @param dest 
- * @param taille 
+ * @brief récupère l'entrée clavier utilisateur
+ * s'il reste des caractères dans le buffer, vide le buffer
+ * @param dest un pointeur sur la chaine de destination
+ * @param taille le nombre de caractères
  * @return int 
  */
 int lire_nom(char *dest, int taille) {
@@ -220,6 +223,7 @@ int lire_nom(char *dest, int taille) {
         // on chercher le retour chariot
         if ((cr = strchr(dest, '\n'))) {
             *cr = '\0';
+
         } else { // sinon il reste des char dans le buffer
             vider_buffer();
         }
@@ -228,24 +232,24 @@ int lire_nom(char *dest, int taille) {
     vider_buffer();
     return 0;
 
-    // // char r = 'a';
-    // // int readcount = 0;
+    // char r = 'a';
+    // int readcount = 0;
 
-    // // for (int i = 0; i < TAILLE_MAX_NOM; i++) {
-    // //     r = fgetc(stdin);
-    // //     if (
-    // //         (r >= 'a' && r <= 'z') ||
-    // //         (r >= 'A' && r <= 'z') ||
-    // //         (r >= '0' && r <= '9')) {
-    // //         dest[i] = r;
-    // //     } else {
-    // //         return readcount;
-    // //     }
-    // // }
+    // for (int i = 0; i < TAILLE_MAX_NOM; i++) {
+    //     r = fgetc(stdin);
+    //     if (
+    //         (r >= 'a' && r <= 'z') ||
+    //         (r >= 'A' && r <= 'z') ||
+    //         (r >= '0' && r <= '9')) {
+    //         dest[i] = r;
+    //     } else {
+    //         return readcount;
+    //     }
+    // }
 
-    // //return readcount;
+    //return readcount;
 
-    // return scanf(" %20s", dest);
+    //return scanf(" %20s", dest);
 }
 
 int main(int argc, char *argv[]) {
@@ -296,18 +300,15 @@ int main(int argc, char *argv[]) {
     /*               JEU                */
     switch (mode_de_jeu) {
     case HH:
-        // La consigne du #define TAILLE_MAX_NOM 20 m'embête
-        //
+
         do {
             printf("Quel est le nom du premier joueur (symbol %c) : ", SYMBOL_1);
             lire_nom(nom, TAILLE_MAX_NOM);
-            printf("\n");
         } while ((joueur_1 = make_joueur(nom, SYMBOL_1, 0)) == NULL);
 
         do {
             printf("Quel est le nom du second joueur (symbol %c) : ", SYMBOL_2);
             lire_nom(nom, TAILLE_MAX_NOM);
-            printf("\n");
         } while ((joueur_2 = make_joueur(nom, SYMBOL_2, 0)) == NULL);
 
         if ((plateau = creer_plateau(joueur_1, joueur_2)) == NULL)
