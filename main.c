@@ -11,13 +11,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TAILLE_PLATEAU 3
+#define TAILLE_PLATEAU 4
 #define TAILLE_MAX_NOM 20
 #define SYMBOL_1 'o'
 #define SYMBOL_2 'x'
 #define VIDE '.'
 #define BORD '*'
-#define BUFFER 500
+#define ORDI_NOM "Ordi"
 
 /**
  * @brief L'interface du jeu.
@@ -76,12 +76,17 @@ Plateau *creer_plateau(Joueur *joueur_1, Joueur *joueur_2) {
             }
         }
     }
+    // ajout joueurs au plateau
     plateau->joueurs[0] = joueur_1;
     plateau->joueurs[1] = joueur_2;
+    // position initiale des pions
     plateau->plateau[1][1] = joueur_2->symbol;
     plateau->plateau[TAILLE_PLATEAU][TAILLE_PLATEAU] = joueur_2->symbol;
     plateau->plateau[1][TAILLE_PLATEAU] = joueur_1->symbol;
     plateau->plateau[TAILLE_PLATEAU][1] = joueur_1->symbol;
+    // mise à jour des points des joueurs
+    plateau->joueurs[0]->score += 2;
+    plateau->joueurs[1]->score += 2;
 
     return plateau;
 }
@@ -91,7 +96,7 @@ Plateau *creer_plateau(Joueur *joueur_1, Joueur *joueur_2) {
  * dans la sortie standard.
  * @param plateau 
  */
-void affiche_plateau_ascii(Plateau plateau) {
+void affiche_plateau_cli(Plateau plateau) {
     int i, j;
 
     for (i = 0; i < TAILLE_PLATEAU + 2; i++) {
@@ -104,6 +109,22 @@ void affiche_plateau_ascii(Plateau plateau) {
     }
 }
 
+void affiche_plateau_gui(Plateau plateau) {
+    ;
+}
+
+void affiche_plateau(Plateau plateau, MODE_I interface) {
+    switch (interface) {
+    case CLI:
+        affiche_plateau_cli(plateau);
+        break;
+    case GUI:
+        affiche_plateau_gui(plateau);
+    default:
+        printf("Interface non définie.");
+        exit(1);
+    }
+}
 /**
  * @brief Ajouter un pion au plateau
  * 
@@ -111,7 +132,7 @@ void affiche_plateau_ascii(Plateau plateau) {
  * @param pi coordonée abscisse du pion
  * @param pj coordonée ordonée du pion
  * @param symbol le symbole à placer
- * @return int retourne le nombre de nouveaux pions de symbole @param symbol
+ * @return int retourne le nombre de pions adverses affectés @param symbol
  */
 int ajouter_pion(Plateau *plateau, int pi, int pj, char symbol) {
 
@@ -131,7 +152,8 @@ int ajouter_pion(Plateau *plateau, int pi, int pj, char symbol) {
             }
         }
     }
-
+    // si aucun pions adverse alors la case
+    // choisie n'est pas autorisé
     if (adverses == 0)
         return 0;
 
@@ -144,43 +166,70 @@ int ajouter_pion(Plateau *plateau, int pi, int pj, char symbol) {
         }
     }
     plateau->plateau[pi][pj] = symbol;
-    return adverses + 1;
+    return adverses;
 }
 
-int verifier_gagnant(Plateau *plateau) {
-    ;
-    return 0;
+int faire_jouer(Joueur joueur, int *i, int *j, MODE_I interface) {
+    if (interface == GUI) {
+
+        return 1;
+    }
+    printf("%s (%c), veuillez saisir les coordonnées où jouer (entre 1 et %d) : ", joueur.nom, joueur.symbol, TAILLE_PLATEAU);
+    return scanf(" %d %d", i, j);
 }
 
-int jouer(Plateau *plateau) {
+int jouer(Plateau *plateau, MODE_I interface, MODE_J mode_jeu) {
+    // indice du joueur courrant
     int numj = 0;
-    int i = -1, j = -1;
+    // pointeur sur le joueur courrant;
     Joueur *joueur = NULL;
+    // coordonées de la case
+    int i = -1, j = -1;
+    // nombre de pions modifiés après placement d'un pion
     int pions_retournes = 0;
 
+    // premier affichage du plateau
+    if (interface == GUI) {
+        affiche_plateau(*plateau, interface);
+    } else {
+        printf("\n");
+        affiche_plateau(*plateau, interface);
+        printf("\n");
+    }
+
     while ((1)) {
-        // vérifier etat du jeu.
+
         i = -1, j = -1;
         joueur = plateau->joueurs[numj];
-        printf("%s (%c), veuillez saisir les coordonnées où jouer (entre 1 et %d) : ", joueur->nom, joueur->symbol, TAILLE_PLATEAU);
-        scanf(" %d %d", &i, &j);
+
+        if (mode_jeu == HO && (numj)) {
+            // Todo: faire joueur l'ordi sur i,j
+        } else {
+            faire_jouer(*joueur, &i, &j, interface);
+        }
+
         // si le joueur parviens à placer un pion
+        // Todo: controle de l'entrée des entier, là, entrer un caractère fait planter le programme
         if ((pions_retournes = ajouter_pion(plateau, i, j, joueur->symbol)) != 0) {
             // reaffichage du plateau
-            affiche_plateau_ascii(*plateau);
+            affiche_plateau(*plateau, interface);
             // mise à jour des points
-            joueur->score += pions_retournes;
+            joueur->score += pions_retournes + 1;
+            // indice du joueur courrant passe au suivant
             numj = (numj + 1) % 2;
             // mise à jour des points adverses
-            plateau->joueurs[numj]->score -= (pions_retournes - 1);
+            plateau->joueurs[numj]->score -= pions_retournes;
             // affichage des scores
             printf(
-                "Score actuel : %s(%c) %d", joueur->nom, joueur->symbol, joueur->score);
+                "Score actuel : %s(%c) %d", plateau->joueurs[0]->nom, plateau->joueurs[0]->symbol, plateau->joueurs[0]->score);
             printf(
-                " - %s(%c) %d\n\n", plateau->joueurs[numj]->nom, plateau->joueurs[numj]->symbol, plateau->joueurs[numj]->score);
+                " - %s(%c) %d\n\n", plateau->joueurs[1]->nom, plateau->joueurs[1]->symbol, plateau->joueurs[1]->score);
+
+            // vérifier si le joueur à bien des cases de libres
+            // ou que sont nombre de pion n'est pas égal à zéro
         }
     }
-    return 0;
+    return 1;
 }
 
 /**
@@ -231,25 +280,6 @@ int lire_nom(char *dest, int taille) {
     }
     vider_buffer();
     return 0;
-
-    // char r = 'a';
-    // int readcount = 0;
-
-    // for (int i = 0; i < TAILLE_MAX_NOM; i++) {
-    //     r = fgetc(stdin);
-    //     if (
-    //         (r >= 'a' && r <= 'z') ||
-    //         (r >= 'A' && r <= 'z') ||
-    //         (r >= '0' && r <= '9')) {
-    //         dest[i] = r;
-    //     } else {
-    //         return readcount;
-    //     }
-    // }
-
-    //return readcount;
-
-    //return scanf(" %20s", dest);
 }
 
 int main(int argc, char *argv[]) {
@@ -258,7 +288,7 @@ int main(int argc, char *argv[]) {
     // par défaut en ASCII
     MODE_I interface = CLI;
     // par défaut humain vs ordi
-    MODE_J mode_de_jeu = HO;
+    MODE_J mode_jeu = HO;
     Joueur *joueur_1 = NULL;
     Joueur *joueur_2 = NULL;
     char nom[TAILLE_MAX_NOM];
@@ -285,10 +315,10 @@ int main(int argc, char *argv[]) {
                     interface = GUI;
                     break;
                 case 'h':
-                    mode_de_jeu = HH;
+                    mode_jeu = HH;
                     break;
                 case 'o':
-                    mode_de_jeu = HO;
+                    mode_jeu = HO;
                     break;
                 default:
                     continue;
@@ -298,7 +328,8 @@ int main(int argc, char *argv[]) {
     }
 
     /*               JEU                */
-    switch (mode_de_jeu) {
+    switch (mode_jeu) {
+    // Humain vs Humain
     case HH:
 
         do {
@@ -311,19 +342,46 @@ int main(int argc, char *argv[]) {
             lire_nom(nom, TAILLE_MAX_NOM);
         } while ((joueur_2 = make_joueur(nom, SYMBOL_2, 0)) == NULL);
 
-        if ((plateau = creer_plateau(joueur_1, joueur_2)) == NULL)
-            return 1;
-        affiche_plateau_ascii(*plateau);
-        printf("\n");
-        jouer(plateau);
-
         break;
+    // Humain vs Ordi
     case HO:
+        do {
+            printf("Quel est le nom du joueur (symbol %c) : ", SYMBOL_1);
+            lire_nom(nom, TAILLE_MAX_NOM);
+        } while ((joueur_1 = make_joueur(nom, SYMBOL_1, 0)) == NULL);
+
+        joueur_2 = make_joueur(ORDI_NOM, SYMBOL_2, 0);
         break;
     default:
-        return 1;
+        printf("Erreur. Aucun mode de jeu défini.");
+        exit(1);
     }
+
+    if ((plateau = creer_plateau(joueur_1, joueur_2)) == NULL)
+        exit(1);
+    jouer(plateau, interface, mode_jeu);
 
     return 0;
 }
 // clang -Wall -Wfatal-errors -std=c17 main.c -o main
+
+// ########################################### Mon brouillon
+
+// char r = 'a';
+// int readcount = 0;
+
+// for (int i = 0; i < TAILLE_MAX_NOM; i++) {
+//     r = fgetc(stdin);
+//     if (
+//         (r >= 'a' && r <= 'z') ||
+//         (r >= 'A' && r <= 'z') ||
+//         (r >= '0' && r <= '9')) {
+//         dest[i] = r;
+//     } else {
+//         return readcount;
+//     }
+// }
+
+//return readcount;
+
+//return scanf(" %20s", dest);
