@@ -179,9 +179,9 @@ int faire_jouer(Joueur joueur, int *i, int *j, MODE_I interface) {
 }
 
 int jouer(Plateau *plateau, MODE_I interface, MODE_J mode_jeu) {
-    // indice du joueur courrant
+    // indice du joueur courant
     int numj = 0;
-    // pointeur sur le joueur courrant;
+    // pointeur sur le joueur courant;
     Joueur *joueur = NULL;
     // coordonées de la case
     int i = -1, j = -1;
@@ -215,7 +215,7 @@ int jouer(Plateau *plateau, MODE_I interface, MODE_J mode_jeu) {
             affiche_plateau(*plateau, interface);
             // mise à jour des points
             joueur->score += pions_retournes + 1;
-            // indice du joueur courrant passe au suivant
+            // indice du joueur courant passe au suivant
             numj = (numj + 1) % 2;
             // mise à jour des points adverses
             plateau->joueurs[numj]->score -= pions_retournes;
