@@ -18,12 +18,13 @@
 #define SYMBOL_2 'x'
 #define VIDE '.'
 #define BORD '*'
-#define ORDI_NOM "Ordi"
+#define NOM_ORDI "Ordi"
+#define BACKGROUND_COLOR MLV_COLOR_WHITE
 /**
  * @brief Pourcentage du côté le plus petit
  * de l'écran.
  */
-#define TAILLE_RELATIVE 25
+#define TAILLE_RELATIVE 50
 
 /**
  * @brief Représentation du type d'interface du jeu.
@@ -81,16 +82,17 @@ void affiche_plateau_cli(Plateau plateau);
  * @brief Affiche le Plateau dans une fêtre.
  * @param plateau Le plateau à afficher.
  */
-void affiche_plateau_gui(Plateau plateau);
+void affiche_plateau_gui(Plateau plateau, Joueur j_courant);
 
 /**
  * @brief Fait afficher un plateau donné en fonction
  * du type d'interface choisie en option.
  *
  * @param plateau Le plateau à afficher.
+ * @param j_courant Le joueur effectuant le tour.
  * @param interface Le type d'interface.
  */
-void affiche_plateau(Plateau plateau, MODE_I interface);
+void affiche_plateau(Plateau plateau, Joueur j_courant, MODE_I interface);
 
 /**
  * @brief Ajouter un pion au plateau
@@ -146,6 +148,9 @@ void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu);
  * @return Joueur* Un pointeur sur la structure joueur alloué.
  */
 Joueur *make_joueur(char nom[TAILLE_MAX_NOM], char symbol);
+
+int taille_fenetre();
+void init_fenetre();
 
 int main(int argc, char *argv[]) {
 
@@ -215,7 +220,7 @@ int main(int argc, char *argv[]) {
             lire_clavier(nom, TAILLE_MAX_NOM);
         } while ((joueur_1 = make_joueur(nom, SYMBOL_1)) == NULL);
 
-        joueur_2 = make_joueur(ORDI_NOM, SYMBOL_2);
+        joueur_2 = make_joueur(NOM_ORDI, SYMBOL_2);
         break;
     default:
         printf("Erreur. Aucun mode de jeu défini.");
@@ -226,8 +231,15 @@ int main(int argc, char *argv[]) {
         exit(1);
     jouer(plateau, interface, mode_jeu);
 
+    if (interface == GUI) {
+        MLV_wait_seconds(5);
+        MLV_free_window();
+    }
+
     return 0;
 }
+
+// clang -Wall -Wfatal-errors -std=c17 main.c -o main -lMLV
 
 /************************** GUI ***********************************/
 
@@ -235,18 +247,30 @@ int taille_fenetre() {
     unsigned int width, height;
     MLV_get_desktop_size(&width, &height);
     int taille_fenetre = (width > height) ? height : width;
-    taille_fenetre *= (int)TAILLE_RELATIVE / 100;
+    taille_fenetre = (int)(taille_fenetre * TAILLE_RELATIVE) / 100;
     return taille_fenetre;
 }
 
 void init_fenetre() {
+
     int taille_f = taille_fenetre();
-    MLV_Color background_color = MLV_COLOR_BLACK;
     MLV_create_window("TP8", "", taille_f, taille_f);
-    MLV_draw_filled_rectangle(0, 0, taille_f, taille_f, background_color);
+    MLV_draw_filled_rectangle(0, 0, taille_f, taille_f, BACKGROUND_COLOR);
     MLV_actualise_window();
 }
-void affiche_plateau_gui(Plateau plateau) { ; }
+
+void affiche_plateau_gui(Plateau plateau, Joueur j_courant) {
+
+    int longeur_nom, hauteur_nom = 0;
+    int taille_f = taille_fenetre();
+    int marge = 0;
+
+    MLV_get_size_of_text(j_courant.nom, &longeur_nom, &hauteur_nom);
+    marge = (taille_f - longeur_nom) / 2;
+
+    MLV_draw_text(marge, ((taille_f * 2) / 100), j_courant.nom, MLV_COLOR_BLACK);
+    MLV_actualise_window();
+}
 
 /************************** CLI ***********************************/
 void affiche_plateau_cli(Plateau plateau) {
@@ -275,10 +299,11 @@ void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu) {
 
     // premier affichage du plateau
     if (interface == GUI) {
-        affiche_plateau(*p, interface);
+        init_fenetre();
+        affiche_plateau(*p, *p->joueurs[0], interface);
     } else {
         printf("\n");
-        affiche_plateau(*p, interface);
+        affiche_plateau(*p, *p->joueurs[0], interface);
         printf("\n");
     }
     return;
@@ -298,7 +323,7 @@ void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu) {
         // si le joueur parviens à placer un pion
         if ((pions_retournes = ajouter_pion(p, i, j, joueur->symbol)) != 0) {
             // reaffichage du plateau
-            affiche_plateau(*p, interface);
+            affiche_plateau(*p, *joueur, interface);
             // mise à jour des points
             joueur->score += pions_retournes + 1;
             // indice du joueur courant passe au suivant
@@ -363,7 +388,7 @@ int ajouter_pion(Plateau *plateau, int pi, int pj, char symbol) {
     if (adverses == 0)
         return 0;
 
-    // Changement de symbole les pions adjacents
+    // Changement de symbole des pions adjacents
     for (i = pi - 1; i <= pi + 1; i++) {
         for (j = pj - 1; j <= pj + 1; j++) {
             if (plateau->plateau[i][j] != VIDE &&
@@ -451,13 +476,14 @@ int lire_clavier(char *dest, int taille) {
     return 0;
 }
 
-void affiche_plateau(Plateau plateau, MODE_I interface) {
+void affiche_plateau(Plateau plateau, Joueur j_courant, MODE_I interface) {
     switch (interface) {
     case CLI:
         affiche_plateau_cli(plateau);
         break;
     case GUI:
-        affiche_plateau_gui(plateau);
+        affiche_plateau_gui(plateau, j_courant);
+        break;
     default:
         printf("Interface non définie.");
         exit(1);
