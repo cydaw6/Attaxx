@@ -261,46 +261,92 @@ void init_fenetre() {
     MLV_actualise_window();
 }
 
-void affiche_plateau_gui(Plateau plateau, Joueur j_courant) {
+int coordonees_vers_indices(int souris_x, int souris_y, int *ci, int *cj) {
 
-    int longeur_nom, hauteur_nom = 0;
+    // taille de la fenetre
     int taille_f = taille_fenetre();
-    int marge = 0;
+    int padding_f = (taille_f * 5) / 100;
+    MLV_draw_filled_rectangle(0, 0, taille_f, taille_f, BACKGROUND_COLOR);
 
-    MLV_get_size_of_text(j_courant.nom, &longeur_nom, &hauteur_nom);
-    marge = (taille_f - longeur_nom) / 2;
-    // position y avec marge top
-    int pos_nom_y = (taille_f * 2) / 100;
-    MLV_draw_text(marge, pos_nom_y, j_courant.nom, MLV_COLOR_BLACK);
-
-    marge = (taille_f * 2) / 100;
-    // longeur de la grille
-    int taille_grille = (taille_f - (marge * 2));
+    // longueur de la grille
+    int taille_grille = (taille_f - (padding_f * 2));
     int taille_case = taille_grille / TAILLE_PLATEAU;
 
     // grille
-    int i, j, x = marge, y = pos_nom_y + hauteur_nom;
-
+    int i, j, x = padding_f, y = (taille_f * 10) / 100;
     for (i = 1; i < TAILLE_PLATEAU + 1; i++) {
-
-        MLV_draw_line(x, y, x + taille_grille, y, MLV_COLOR_BLACK);
-
         for (j = 1; j < TAILLE_PLATEAU + 1; j++) {
-
-            MLV_draw_line(x, y, x, y + taille_case, MLV_COLOR_BLACK);
-
-            // switch (plateau.plateau[i][j]) {
-            // case SYMBOL_1:
-            //     break;
-            // case SYMBOL_2:
-            //     break;
-            // default:;
-            // }
-            marge += PADDING_CASE;
+            // si la souris est sur la case, mise en évidence
+            if (souris_x > x && souris_x < x + taille_case && souris_y > y &&
+                souris_y < y + taille_case) {
+                *ci = i;
+                *cj = j;
+                return 1;
+            }
             x += taille_case;
         }
-        x = (taille_f * 2) / 100;
 
+        x = padding_f;
+        y += taille_case;
+    }
+    return 0;
+}
+
+void affiche_plateau_gui(Plateau plateau, Joueur j_courant) {
+
+    // longeur, hauteur du nom du joueur courant
+    int longeur_nom, hauteur_nom = 0;
+    MLV_get_size_of_text(j_courant.nom, &longeur_nom, &hauteur_nom);
+    // taille de la fenetre
+    int taille_f = taille_fenetre();
+    int padding_f = (taille_f * 5) / 100;
+    int padding_case = (taille_f * 1) / 100;
+    MLV_draw_filled_rectangle(0, 0, taille_f, taille_f, BACKGROUND_COLOR);
+    // espace à gauche et à droit du nom pour centrer le texte
+    int marge = (taille_f - longeur_nom) / 2;
+    // position y du nom avec marge top 2%
+    int pos_nom_y = (taille_f * 2) / 100;
+    MLV_draw_text(marge, pos_nom_y, j_courant.nom, MLV_COLOR_BLACK);
+
+    // longueur de la grille
+    int taille_grille = (taille_f - (padding_f * 2));
+    int taille_case = taille_grille / TAILLE_PLATEAU;
+
+    // grille
+    int i, j, x = padding_f, y = (taille_f * 5) / 100;
+    int souris_x = 0, souris_y = 0;
+
+    MLV_get_mouse_position(&souris_x, &souris_y);
+    for (i = 1; i < TAILLE_PLATEAU + 1; i++) {
+        for (j = 1; j < TAILLE_PLATEAU + 1; j++) {
+            // print bordure de la case
+            MLV_draw_rectangle(x, y, taille_case, taille_case, MLV_COLOR_BLACK);
+            // si la souris est sur la case, mise en évidence
+            if (souris_x > x && souris_x < x + taille_case && souris_y > y &&
+                souris_y < y + taille_case) {
+                MLV_draw_filled_rectangle(
+                    x, y, taille_case, taille_case,
+                    MLV_convert_rgba_to_color(200, 200, 200, 117));
+            }
+
+            switch (plateau.plateau[i][j]) {
+
+            case SYMBOL_1:
+                MLV_draw_filled_circle(
+                    x + (taille_case / 2), y + (taille_case / 2),
+                    (taille_case - padding_case) / 2, MLV_COLOR_BLACK);
+                break;
+            case SYMBOL_2:
+                MLV_draw_circle(x + (taille_case / 2), y + (taille_case / 2),
+                                (taille_case - padding_case) / 2,
+                                MLV_COLOR_BLACK);
+                break;
+            default:;
+            }
+
+            x += taille_case;
+        }
+        x = padding_f;
         y += taille_case;
     }
     MLV_actualise_window();
@@ -321,6 +367,7 @@ void affiche_plateau_cli(Plateau plateau) {
 }
 
 /************************** Jeu ***********************************/
+
 void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu) {
     // indice du joueur courant
     int numj = 0;
@@ -334,13 +381,12 @@ void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu) {
     // premier affichage du plateau
     if (interface == GUI) {
         init_fenetre();
-        affiche_plateau(*p, *p->joueurs[0], interface);
     } else {
         printf("\n");
         affiche_plateau(*p, *p->joueurs[0], interface);
         printf("\n");
     }
-    return;
+
     while (p->joueurs[0]->score != 0 && p->joueurs[1]->score != 0 &&
            p->joueurs[0]->score + p->joueurs[1]->score !=
                TAILLE_PLATEAU * TAILLE_PLATEAU) {
@@ -369,6 +415,12 @@ void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu) {
                    p->joueurs[0]->symbol, p->joueurs[0]->score);
             printf(" - %s(%c) %d\n\n", p->joueurs[1]->nom, p->joueurs[1]->symbol,
                    p->joueurs[1]->score);
+        }
+        // nous permet de metre en évidence
+        // la case survolée
+        if (interface == GUI) {
+            affiche_plateau(*p, *joueur, interface);
+            MLV_wait_milliseconds(50);
         }
     }
 
@@ -471,8 +523,12 @@ Plateau *creer_plateau(Joueur *joueur_1, Joueur *joueur_2) {
 int faire_jouer(Joueur joueur, int *i, int *j, MODE_I interface) {
 
     if (interface == GUI) {
-
-        return 1;
+        if (MLV_get_mouse_button_state(MLV_BUTTON_LEFT) == MLV_PRESSED) {
+            int sx, sy;
+            MLV_get_mouse_position(&sx, &sy);
+            return coordonees_vers_indices(sx, sy, i, j);
+        }
+        return 0;
     }
     printf(
         "%s (%c), veuillez saisir les coordonnées où jouer (entre 1 et %d) : ",
