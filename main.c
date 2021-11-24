@@ -20,6 +20,8 @@
 #define BORD '*'
 #define NOM_ORDI "Ordi"
 #define BACKGROUND_COLOR MLV_COLOR_WHITE
+#define PADDING_CASE 1
+
 /**
  * @brief Pourcentage du côté le plus petit
  * de l'écran.
@@ -232,7 +234,7 @@ int main(int argc, char *argv[]) {
     jouer(plateau, interface, mode_jeu);
 
     if (interface == GUI) {
-        MLV_wait_seconds(5);
+        MLV_wait_seconds(20);
         MLV_free_window();
     }
 
@@ -267,8 +269,37 @@ void affiche_plateau_gui(Plateau plateau, Joueur j_courant) {
 
     MLV_get_size_of_text(j_courant.nom, &longeur_nom, &hauteur_nom);
     marge = (taille_f - longeur_nom) / 2;
+    // position y avec marge top
+    int pos_nom_y = (taille_f * 2) / 100;
+    MLV_draw_text(marge, pos_nom_y, j_courant.nom, MLV_COLOR_BLACK);
 
-    MLV_draw_text(marge, ((taille_f * 2) / 100), j_courant.nom, MLV_COLOR_BLACK);
+    marge = (taille_f * 2) / 100;
+    // longeur de la grille
+    int taille_grille = (taille_f - (marge * 2));
+    int taille_case = taille_grille / TAILLE_PLATEAU;
+    // grille
+    int i, j, x = marge, y = pos_nom_y + hauteur_nom;
+
+    for (i = 1; i < TAILLE_PLATEAU + 1; i++) {
+
+        MLV_draw_line(x, y, x + taille_grille, y, MLV_COLOR_BLACK);
+
+        for (j = 1; j < TAILLE_PLATEAU + 1; j++) {
+
+            MLV_draw_line(x, y, x, y + taille_case, MLV_COLOR_BLACK);
+
+            // switch (plateau.plateau[i][j]) {
+            // case SYMBOL_1:
+            //     break;
+            // case SYMBOL_2:
+            //     break;
+            // default:;
+            // }
+            marge += PADDING_CASE;
+            
+        }
+        y += taille_case;
+    }
     MLV_actualise_window();
 }
 
