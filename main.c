@@ -4,7 +4,7 @@
  * @author Ramzi Djadja
  * @brief Mini-jeu Attaxx
  * @version 0.1
- * @date 2021-11-24
+ * @date 2021-11-25
  *
  */
 #include <MLV/MLV_all.h>
@@ -231,6 +231,7 @@ int main(int argc, char *argv[]) {
 
     if ((plateau = creer_plateau(joueur_1, joueur_2)) == NULL)
         exit(1);
+
     jouer(plateau, interface, mode_jeu);
 
     if (interface == GUI) {
@@ -256,7 +257,7 @@ int taille_fenetre() {
 void init_fenetre() {
 
     int taille_f = taille_fenetre();
-    MLV_create_window("TP8", "", taille_f, taille_f);
+    MLV_create_window("Attax", "", taille_f, taille_f);
     MLV_draw_filled_rectangle(0, 0, taille_f, taille_f, BACKGROUND_COLOR);
     MLV_actualise_window();
 }
@@ -514,9 +515,8 @@ Plateau *creer_plateau(Joueur *joueur_1, Joueur *joueur_2) {
     plateau->plateau[1][TAILLE_PLATEAU] = joueur_1->symbol;
     plateau->plateau[TAILLE_PLATEAU][1] = joueur_1->symbol;
     // mise à jour des points des joueurs
-    plateau->joueurs[0]->score += 2;
-    plateau->joueurs[1]->score += 2;
-
+    plateau->joueurs[0]->score = 2;
+    plateau->joueurs[1]->score = 2;
     return plateau;
 }
 
