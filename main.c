@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TAILLE_PLATEAU 3
+#define TAILLE_PLATEAU 7
 #define TAILLE_MAX_NOM 20
 #define SYMBOL_1 'o'
 #define SYMBOL_2 'x'
@@ -277,6 +277,7 @@ void affiche_plateau_gui(Plateau plateau, Joueur j_courant) {
     // longeur de la grille
     int taille_grille = (taille_f - (marge * 2));
     int taille_case = taille_grille / TAILLE_PLATEAU;
+
     // grille
     int i, j, x = marge, y = pos_nom_y + hauteur_nom;
 
@@ -296,8 +297,10 @@ void affiche_plateau_gui(Plateau plateau, Joueur j_courant) {
             // default:;
             // }
             marge += PADDING_CASE;
-            
+            x += taille_case;
         }
+        x = (taille_f * 2) / 100;
+
         y += taille_case;
     }
     MLV_actualise_window();
