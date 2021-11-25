@@ -301,6 +301,8 @@ void affiche_plateau_gui(Plateau plateau, Joueur j_courant) {
     // taille de la fenetre
     int taille_f = taille_fenetre();
     int padding_f = (taille_f * 5) / 100;
+
+    
     
     
     int padding_case = (taille_f * 1) / 100;
@@ -324,6 +326,10 @@ void affiche_plateau_gui(Plateau plateau, Joueur j_courant) {
     MLV_draw_circle(
                     taille_f - padding_f - (longueur_nom_2 + (taille_f * 3) / 100), pos_nom_y+ hauteur_nom_2 / 2,
                     hauteur_nom_1 / 3, MLV_COLOR_BLACK);
+
+    // char str[80];
+    // 
+    // sprintf(str, "Value of Pi = %f", M_PI);
 
     // longueur de la grille
     int taille_grille = (taille_f - (padding_f * 2));
