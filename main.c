@@ -296,11 +296,13 @@ int coordonees_vers_indices(int souris_x, int souris_y, int *ci, int *cj) {
 void affiche_plateau_gui(Plateau plateau, Joueur j_courant) {
 
     // longeur, hauteur du nom du joueur courant
-    int longeur_nom, hauteur_nom = 0;
+    int longeur_nom = 0, hauteur_nom = 0;
     MLV_get_size_of_text(j_courant.nom, &longeur_nom, &hauteur_nom);
     // taille de la fenetre
     int taille_f = taille_fenetre();
     int padding_f = (taille_f * 5) / 100;
+    
+    
     int padding_case = (taille_f * 1) / 100;
     MLV_draw_filled_rectangle(0, 0, taille_f, taille_f, BACKGROUND_COLOR);
     // espace à gauche et à droit du nom pour centrer le texte
@@ -308,6 +310,20 @@ void affiche_plateau_gui(Plateau plateau, Joueur j_courant) {
     // position y du nom avec marge top 2%
     int pos_nom_y = (taille_f * 2) / 100;
     MLV_draw_text(marge, pos_nom_y, j_courant.nom, MLV_COLOR_BLACK);
+    // affichage joueur 1 en haut à gauche
+    int longueur_nom_1 = 0, hauteur_nom_1 = 0;
+    MLV_get_size_of_text(plateau.joueurs[0]->nom, &longueur_nom_1, &hauteur_nom_1);
+    MLV_draw_text(padding_f, pos_nom_y, plateau.joueurs[0]->nom, MLV_COLOR_BLACK);
+    MLV_draw_filled_circle(
+                    padding_f + longueur_nom_1 + (taille_f * 3) / 100, pos_nom_y+ hauteur_nom_1 / 2,
+                    hauteur_nom_1 / 3, MLV_COLOR_BLACK);
+    // affichage joueur 1 en haut à droite
+    int longueur_nom_2 = 0, hauteur_nom_2 = 0;
+    MLV_get_size_of_text(plateau.joueurs[1]->nom, &longueur_nom_2, &hauteur_nom_2);
+    MLV_draw_text(taille_f - padding_f - longueur_nom_2, pos_nom_y, plateau.joueurs[0]->nom, MLV_COLOR_BLACK);
+    MLV_draw_circle(
+                    taille_f - padding_f - (longueur_nom_2 + (taille_f * 3) / 100), pos_nom_y+ hauteur_nom_2 / 2,
+                    hauteur_nom_1 / 3, MLV_COLOR_BLACK);
 
     // longueur de la grille
     int taille_grille = (taille_f - (padding_f * 2));
