@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define TAILLE_PLATEAU 7
 #define TAILLE_MAX_NOM 20
@@ -21,6 +22,7 @@
 #define NOM_ORDI "Ordi"
 #define BACKGROUND_COLOR MLV_COLOR_WHITE
 #define PADDING_CASE 1
+#
 
 /**
  * @brief Pourcentage du côté le plus petit
@@ -153,9 +155,10 @@ Joueur *make_joueur(char nom[TAILLE_MAX_NOM], char symbol);
 
 int taille_fenetre();
 void init_fenetre();
+int random_int(int min, int max);
 
 int main(int argc, char *argv[]) {
-
+    srand(time(NULL));
     Plateau *plateau = NULL;
     // par défaut en ASCII
     MODE_I interface = CLI;
@@ -235,7 +238,7 @@ int main(int argc, char *argv[]) {
     jouer(plateau, interface, mode_jeu);
 
     if (interface == GUI) {
-        MLV_wait_seconds(20);
+        MLV_wait_seconds(60);
         MLV_free_window();
     }
 
@@ -274,7 +277,7 @@ int coordonees_vers_indices(int souris_x, int souris_y, int *ci, int *cj) {
     int taille_case = taille_grille / TAILLE_PLATEAU;
 
     // grille
-    int i, j, x = padding_f, y = (taille_f * 10) / 100;
+    int i, j, x = padding_f, y = (taille_f * 5) / 100;
     for (i = 1; i < TAILLE_PLATEAU + 1; i++) {
         for (j = 1; j < TAILLE_PLATEAU + 1; j++) {
             // si la souris est sur la case, mise en évidence
@@ -293,43 +296,64 @@ int coordonees_vers_indices(int souris_x, int souris_y, int *ci, int *cj) {
     return 0;
 }
 
+// TODO : afficher les score sur la fenetre
+void affiche_scores(Joueur gagnant, Joueur perdant) { ; }
+
 void affiche_plateau_gui(Plateau plateau, Joueur j_courant) {
 
-    // longeur, hauteur du nom du joueur courant
     int longeur_nom = 0, hauteur_nom = 0;
-    MLV_get_size_of_text(j_courant.nom, &longeur_nom, &hauteur_nom);
-    // taille de la fenetre
     int taille_f = taille_fenetre();
-    int padding_f = (taille_f * 5) / 100;
-
-    
-    
-    
-    int padding_case = (taille_f * 1) / 100;
+    // background
     MLV_draw_filled_rectangle(0, 0, taille_f, taille_f, BACKGROUND_COLOR);
+    int padding_f = (taille_f * 5) / 100;
+    char score[TAILLE_PLATEAU * TAILLE_PLATEAU + 1] = {0};
+    int longueur_score = 0, hauteur_score = 0;
+    int longueur_nom_1 = 0, hauteur_nom_1 = 0;
+    int padding_case = (taille_f * 2) / 100;
+    // nom centré du joueur courant
+    char tour_nom[TAILLE_MAX_NOM + 13] = {'\0'};
+
+    sprintf(tour_nom, "Au tour de %s", j_courant.nom);
+    MLV_get_size_of_text(tour_nom, &longeur_nom, &hauteur_nom);
     // espace à gauche et à droit du nom pour centrer le texte
     int marge = (taille_f - longeur_nom) / 2;
     // position y du nom avec marge top 2%
     int pos_nom_y = (taille_f * 2) / 100;
-    MLV_draw_text(marge, pos_nom_y, j_courant.nom, MLV_COLOR_BLACK);
-    // affichage joueur 1 en haut à gauche
-    int longueur_nom_1 = 0, hauteur_nom_1 = 0;
-    MLV_get_size_of_text(plateau.joueurs[0]->nom, &longueur_nom_1, &hauteur_nom_1);
-    MLV_draw_text(padding_f, pos_nom_y, plateau.joueurs[0]->nom, MLV_COLOR_BLACK);
-    MLV_draw_filled_circle(
-                    padding_f + longueur_nom_1 + (taille_f * 3) / 100, pos_nom_y+ hauteur_nom_1 / 2,
-                    hauteur_nom_1 / 3, MLV_COLOR_BLACK);
-    // affichage joueur 1 en haut à droite
-    int longueur_nom_2 = 0, hauteur_nom_2 = 0;
-    MLV_get_size_of_text(plateau.joueurs[1]->nom, &longueur_nom_2, &hauteur_nom_2);
-    MLV_draw_text(taille_f - padding_f - longueur_nom_2, pos_nom_y, plateau.joueurs[0]->nom, MLV_COLOR_BLACK);
-    MLV_draw_circle(
-                    taille_f - padding_f - (longueur_nom_2 + (taille_f * 3) / 100), pos_nom_y+ hauteur_nom_2 / 2,
-                    hauteur_nom_1 / 3, MLV_COLOR_BLACK);
 
-    // char str[80];
-    // 
-    // sprintf(str, "Value of Pi = %f", M_PI);
+    MLV_draw_text(marge, pos_nom_y, tour_nom, MLV_COLOR_BLACK);
+    // affichage joueur 1 en haut à gauche
+    MLV_get_size_of_text(plateau.joueurs[0]->nom, &longueur_nom_1,
+                         &hauteur_nom_1);
+    MLV_draw_text(padding_f, pos_nom_y, plateau.joueurs[0]->nom,
+                  MLV_COLOR_BLACK);
+    MLV_get_size_of_text(score, &longueur_score, &hauteur_score);
+    // affichage score joueur 1 en haut à gauche
+    sprintf(score, "%d", plateau.joueurs[0]->score);
+    MLV_get_size_of_text(score, &longueur_score, &hauteur_score);
+    MLV_draw_text(padding_f + longueur_nom_1 + (taille_f * 2) / 100, pos_nom_y,
+                  score, MLV_COLOR_BLACK);
+    // affichage pion joueur 1 en haut à gauche
+    MLV_draw_filled_circle(
+        padding_f + longueur_nom_1 + longueur_score + (taille_f * 4) / 100,
+        pos_nom_y + hauteur_nom_1 / 2, hauteur_nom_1 / 3, MLV_COLOR_BLACK);
+    // affichage joueur 2 en haut à droite
+    int longueur_nom_2 = 0, hauteur_nom_2 = 0;
+
+    MLV_get_size_of_text(plateau.joueurs[1]->nom, &longueur_nom_2,
+                         &hauteur_nom_2);
+    MLV_draw_text((taille_f - padding_f) - longueur_nom_2, pos_nom_y,
+                  plateau.joueurs[1]->nom, MLV_COLOR_BLACK);
+    // affichage score joueur 2 en haut à droite
+    sprintf(score, "%d", plateau.joueurs[1]->score);
+    MLV_get_size_of_text(score, &longueur_score, &hauteur_score);
+    MLV_draw_text((taille_f - padding_f) - longueur_nom_2 - longueur_score -
+                      +(taille_f * 2) / 100,
+                  pos_nom_y, score, MLV_COLOR_BLACK);
+    // affichage pion joueur 2 en haut à droite
+    MLV_draw_circle(taille_f - padding_f - longueur_score -
+                        (longueur_nom_2 + (taille_f * 4) / 100),
+                    pos_nom_y + hauteur_nom_2 / 2, hauteur_nom_1 / 3,
+                    MLV_COLOR_BLACK);
 
     // longueur de la grille
     int taille_grille = (taille_f - (padding_f * 2));
@@ -391,11 +415,73 @@ void affiche_plateau_cli(Plateau plateau) {
 
 /************************** Jeu ***********************************/
 
+/**
+ * @brief Renvoie le nombre d'adverses adjacents à une case pour un symbole
+ * donné.
+ *
+ * @param plateau
+ * @param pi
+ * @param pj
+ * @param symbol
+ * @return int
+ */
+int valeur_case(Plateau plateau, int pi, int pj, char symbol) {
+    int nbr_adverses = 0;
+    // vérifications des pions adjacents
+    for (int i = pi - 1; i <= pi + 1; i++) {
+        for (int j = pj - 1; j <= pj + 1; j++) {
+
+            if (plateau.plateau[i][j] != VIDE &&
+                plateau.plateau[i][j] != symbol &&
+                plateau.plateau[i][j] != BORD) {
+                nbr_adverses += 1;
+            }
+        }
+    }
+    return nbr_adverses;
+}
+
+/**
+ * @brief Renvoie 0 si une condition d'arrêt de partie est vraie
+ * sinon le jeu continue on renvoie 1.
+ *
+ * @param plateau
+ * @param j_courant
+ */
+int etat_partie(Plateau plateau, Joueur j_courant) {
+    if (plateau.joueurs[0]->score == 0)
+        return 0;
+
+    if (plateau.joueurs[1]->score == 0)
+        return 0;
+
+    if (plateau.joueurs[0]->score + plateau.joueurs[1]->score ==
+        TAILLE_PLATEAU * TAILLE_PLATEAU)
+        return 0;
+
+    // on regarde s'il existe au moins un pion adverse
+    // adjacent à une case libre
+    int case_ok = 0;
+    int c = 0;
+    for (int i = 1; i < TAILLE_PLATEAU + 1; i++) {
+        for (int j = 1; j < TAILLE_PLATEAU + 1; j++) {
+            if (plateau.plateau[i][j] == VIDE) {
+                // vérifications des pions adjacents
+                c = valeur_case(plateau, i, j, j_courant.symbol);
+                case_ok += c;
+                // printf("CASE %d: %d: %d\n", i, j, c);
+            }
+        }
+    }
+
+    return case_ok;
+}
+
 void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu) {
     // indice du joueur courant
     int numj = 0;
     // pointeur sur le joueur courant;
-    Joueur *joueur = NULL;
+    Joueur *joueur = p->joueurs[numj];
     // coordonées de la case
     int i = -1, j = -1;
     // nombre de pions modifiés après placement d'un pion
@@ -409,16 +495,20 @@ void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu) {
         affiche_plateau(*p, *p->joueurs[0], interface);
         printf("\n");
     }
-
-    while (p->joueurs[0]->score != 0 && p->joueurs[1]->score != 0 &&
-           p->joueurs[0]->score + p->joueurs[1]->score !=
-               TAILLE_PLATEAU * TAILLE_PLATEAU) {
+    int continuer = etat_partie(*p, *joueur);
+    while (continuer) {
 
         i = -1, j = -1;
         joueur = p->joueurs[numj];
 
         if (mode_jeu == HO && (numj)) {
-            // Todo: faire joueur l'ordi sur i,j
+            // temps pour trouver une case trop long
+            // surtout au début car trop de cases
+            // pour tomber sur une bonne rapidement.
+            i = random_int(1, TAILLE_PLATEAU);
+            j = random_int(1, TAILLE_PLATEAU);
+            faire_jouer(*joueur, &i, &j, interface);
+            MLV_wait_milliseconds(150);
         } else {
             faire_jouer(*joueur, &i, &j, interface);
         }
@@ -434,10 +524,14 @@ void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu) {
             // mise à jour des points adverses
             p->joueurs[numj]->score -= pions_retournes;
             // affichage des scores
-            printf("Score actuel : %s(%c) %d", p->joueurs[0]->nom,
-                   p->joueurs[0]->symbol, p->joueurs[0]->score);
-            printf(" - %s(%c) %d\n\n", p->joueurs[1]->nom, p->joueurs[1]->symbol,
-                   p->joueurs[1]->score);
+            if (interface == CLI) {
+                printf("Score actuel : %s(%c) %d", p->joueurs[0]->nom,
+                       p->joueurs[0]->symbol, p->joueurs[0]->score);
+                printf(" - %s(%c) %d\n\n", p->joueurs[1]->nom,
+                       p->joueurs[1]->symbol, p->joueurs[1]->score);
+            }
+            // on check le plateau seulement après avoir joué
+            continuer = etat_partie(*p, *joueur);
         }
         // nous permet de metre en évidence
         // la case survolée
@@ -448,15 +542,25 @@ void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu) {
     }
 
     // afficher gagants
+    int gagnant = -1, perdant = -1;
+
     if (p->joueurs[0]->score == p->joueurs[1]->score) {
         printf("Egalité %d à %d.", p->joueurs[0]->score, p->joueurs[1]->score);
     } else if (p->joueurs[0]->score > p->joueurs[1]->score) {
-        printf("Bravo %s, vous avez gagné %d à %d", p->joueurs[0]->nom,
-               p->joueurs[0]->score, p->joueurs[1]->score);
+        gagnant = 0;
+        perdant = 1;
     } else {
-        printf("Bravo %s, vous avez gagné %d à %d", p->joueurs[1]->nom,
-               p->joueurs[1]->score, p->joueurs[0]->score);
+        gagnant = 1;
+        perdant = 0;
     }
+
+    if (interface == CLI) {
+
+    } else {
+        printf("Bravo %s, vous avez gagné %d à %d", p->joueurs[gagnant]->nom,
+               p->joueurs[gagnant]->score, p->joueurs[perdant]->score);
+    }
+
     printf("\n");
 }
 
@@ -478,36 +582,23 @@ int ajouter_pion(Plateau *plateau, int pi, int pj, char symbol) {
         plateau->plateau[pi][pj] != VIDE)
         return 0;
 
-    int adverses = 0;
-    int i, j;
-
-    // vérifications des pions adjacents
-    for (i = pi - 1; i <= pi + 1; i++) {
-        for (j = pj - 1; j <= pj + 1; j++) {
-
-            if (plateau->plateau[i][j] != VIDE &&
-                plateau->plateau[i][j] != symbol &&
-                plateau->plateau[i][j] != BORD) {
-                adverses += 1;
-            }
-        }
-    }
-    // si aucun pions adverse alors la case
-    // choisie n'est pas autorisé
-    if (adverses == 0)
-        return 0;
-
+    int i, j, nbr_adverses = 0;
     // Changement de symbole des pions adjacents
     for (i = pi - 1; i <= pi + 1; i++) {
         for (j = pj - 1; j <= pj + 1; j++) {
             if (plateau->plateau[i][j] != VIDE &&
-                plateau->plateau[i][j] != BORD) {
+                plateau->plateau[i][j] != BORD &&
+                plateau->plateau[i][j] != symbol) {
                 plateau->plateau[i][j] = symbol;
+                nbr_adverses += 1;
             }
         }
     }
-    plateau->plateau[pi][pj] = symbol;
-    return adverses;
+    if (nbr_adverses) {
+        plateau->plateau[pi][pj] = symbol;
+    }
+
+    return nbr_adverses;
 }
 
 Plateau *creer_plateau(Joueur *joueur_1, Joueur *joueur_2) {
@@ -601,3 +692,5 @@ void affiche_plateau(Plateau plateau, Joueur j_courant, MODE_I interface) {
         exit(1);
     }
 }
+
+int random_int(int min, int max) { return min + rand() % (max + 1 - min); }
