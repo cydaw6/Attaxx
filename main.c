@@ -22,7 +22,6 @@
 #define NOM_ORDI "Ordi"
 #define BACKGROUND_COLOR MLV_COLOR_WHITE
 #define PADDING_CASE 1
-#
 
 /**
  * @brief Pourcentage du côté le plus petit
