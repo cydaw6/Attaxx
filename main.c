@@ -4,7 +4,7 @@
  * @author Ramzi Djadja
  * @brief Mini-jeu Attaxx
  * @version 0.1
- * @date 2021-11-25
+ * @date 2021-11-26
  *
  */
 #include <MLV/MLV_all.h>
@@ -13,7 +13,7 @@
 #include <string.h>
 #include <time.h>
 
-#define TAILLE_PLATEAU 7
+#define TAILLE_PLATEAU 4
 #define TAILLE_MAX_NOM 20
 #define SYMBOL_1 'o'
 #define SYMBOL_2 'x'
@@ -35,7 +35,7 @@
  * ligne de commande ou interface
  * graphique.
  */
-typedef enum { CLI = 0, GUI = 1 } MODE_I;
+typedef enum { CLI = 0, GUI = 1 } TYPE_I;
 
 /**
  * @brief Représentation du mode de jeu.
@@ -85,6 +85,7 @@ void affiche_plateau_cli(Plateau plateau);
 /**
  * @brief Affiche le Plateau dans une fêtre.
  * @param plateau Le plateau à afficher.
+ * @param j_courant Le joueur courant.
  */
 void affiche_plateau_gui(Plateau plateau, Joueur j_courant);
 
@@ -96,7 +97,7 @@ void affiche_plateau_gui(Plateau plateau, Joueur j_courant);
  * @param j_courant Le joueur effectuant le tour.
  * @param interface Le type d'interface.
  */
-void affiche_plateau(Plateau plateau, Joueur j_courant, MODE_I interface);
+void affiche_plateau(Plateau plateau, Joueur j_courant, TYPE_I interface);
 
 /**
  * @brief Ajouter un pion au plateau
@@ -121,7 +122,7 @@ void vider_buffer();
  * @param taille le nombre de caractères.
  * @return int
  */
-int lire_clavier(char *dest, int taille);
+int lire_nom(char *dest, int taille, TYPE_I interface, char *message);
 
 /**
  * @brief Pour un joueur donné, selon le type d'interface,
@@ -133,7 +134,7 @@ int lire_clavier(char *dest, int taille);
  * @param interface Le type d'interface.
  * @return int Retourne 0 si les coordonées on été récupérés.
  */
-int faire_jouer(Joueur joueur, int *i, int *j, MODE_I interface);
+int faire_jouer(Joueur joueur, int *i, int *j, TYPE_I interface);
 
 /**
  * @brief Lance une partie d'attax sur un plateau donné.
@@ -142,7 +143,7 @@ int faire_jouer(Joueur joueur, int *i, int *j, MODE_I interface);
  * @param interface Le type d'interface.
  * @param mode_jeu Le mode_jeu.
  */
-void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu);
+void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu);
 
 /**
  * @brief Alloue une structure joueur.
@@ -153,92 +154,107 @@ void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu);
  */
 Joueur *make_joueur(char nom[TAILLE_MAX_NOM], char symbol);
 
+/**
+ * @brief Renvoie le nombre de pions adverses adjacents à une case pour un
+ * symbole donné et les indices d'une case.
+ *
+ * @param plateau
+ * @param pi
+ * @param pj
+ * @param symbol
+ * @return int
+ */
+int valeur_case(Plateau plateau, int pi, int pj, char symbol);
+
+/**
+void affiche_plateau_gu
+ * attaxx en fonction de l'écran utilisateur.
+ *
+ * @return int # TAILLE_RELATIVE pourcentage du côté le plus petit de l'écran
+ * utilisateur
+ */
 int taille_fenetre();
+
+/**
+ * @brief Créer et affiche avec la lib MLV
+ */
 void init_fenetre();
+
+/**
+ * @brief Renvoie un entier alétoire
+ * entre deux deux nombre.
+ *
+ * @param min
+ * @param max
+ * @return int
+ */
 int random_int(int min, int max);
+
+/**
+ * @brief Renvoie les indices de la case associée aux coordonées x,y
+ * dans la fenêtre.
+ *
+ * @param souris_x cordoonnée abscisse dans la fenêtre
+ * @param souris_y cordoonnée ordonnée dans la fenêtre
+ * @param ci pointeur pour le retour de l'indice de ligne
+ * @param cj pointeur pour le retour de l'indice de colonne
+ * @return int 1 si une case les coordonées correspondent à une case, 0 sinon.
+ */
+int coordonees_vers_indices(int souris_x, int souris_y, int *ci, int *cj);
+
+/**
+ * @brief Renvoie 0 si une condition d'arrêt de partie est vraie
+ * sinon le jeu continue on renvoie 1.
+ *
+ * @param plateau
+ * @param j_courant
+ */
+int etat_partie(Plateau plateau, Joueur j_courant);
+
+/**
+ * @brief Traite les options de jeu passés en argument du programme.
+ *
+ * @param interface l'interface de jeu
+ * @param mode_jeu le mode je jeu
+ * @param argc nombre d'arguments
+ * @param argv tableau des chaine d'arguments
+ */
+void options(TYPE_I *interface, MODE_J *mode_jeu, int argc, char *argv[]);
+
+/**
+ * @brief Alloue les différentes structure du jeu
+ * selon le type d'interface.
+ *
+ * @param plateau un pointeur sur un pointeur de tableau
+ * @param interface le type d'interface
+ * @param mode_jeu le mode de jeu
+ * @return int 0 si le plateau n'a pas pu être alloué
+ */
+int init_jeu(Plateau **plateau, TYPE_I interface, MODE_J mode_jeu);
 
 int main(int argc, char *argv[]) {
     srand(time(NULL));
     Plateau *plateau = NULL;
     // par défaut en ASCII
-    MODE_I interface = CLI;
+    TYPE_I interface = CLI;
     // par défaut humain vs ordi
     MODE_J mode_jeu = HO;
-    Joueur *joueur_1 = NULL;
-    Joueur *joueur_2 = NULL;
-    char nom[TAILLE_MAX_NOM];
 
-    /*           TRAITEMENT OPTIONS            */
-    // index de l'argument
-    int i = 1;
-    // pointeur sur la chaine de l'argument
-    char *str_option;
-    // iteration sur les arguments
-    for (; i < argc; i++) {
-        str_option = argv[i];
-        // si est une option
-        if (*str_option == '-') {
-            str_option++;
-            // iteration sur la chaine de l'argument
-            for (; *str_option; str_option++) {
-                // enregistre choix option
-                switch (*str_option) {
-                case 'a':
-                    interface = CLI;
-                    break;
-                case 'g':
-                    interface = GUI;
-                    break;
-                case 'h':
-                    mode_jeu = HH;
-                    break;
-                case 'o':
-                    mode_jeu = HO;
-                    break;
-                default:
-                    continue;
-                }
-            }
-        }
+    // Options
+    options(&interface, &mode_jeu, argc, argv);
+
+    // Initialiser le jeu
+    if (init_jeu(&plateau, interface, mode_jeu) == 0) {
+        return 1;
     }
 
-    /*               JEU                */
-    switch (mode_jeu) {
-    // Humain vs Humain
-    case HH:
-
-        do {
-            printf("Quel est le nom du premier joueur (symbol %c) : ", SYMBOL_1);
-            lire_clavier(nom, TAILLE_MAX_NOM);
-        } while ((joueur_1 = make_joueur(nom, SYMBOL_1)) == NULL);
-
-        do {
-            printf("Quel est le nom du second joueur (symbol %c) : ", SYMBOL_2);
-            lire_clavier(nom, TAILLE_MAX_NOM);
-        } while ((joueur_2 = make_joueur(nom, SYMBOL_2)) == NULL);
-
-        break;
-    // Humain vs Ordi
-    case HO:
-        do {
-            printf("Quel est le nom du joueur (symbol %c) : ", SYMBOL_1);
-            lire_clavier(nom, TAILLE_MAX_NOM);
-        } while ((joueur_1 = make_joueur(nom, SYMBOL_1)) == NULL);
-
-        joueur_2 = make_joueur(NOM_ORDI, SYMBOL_2);
-        break;
-    default:
-        printf("Erreur. Aucun mode de jeu défini.");
-        exit(1);
-    }
-
-    if ((plateau = creer_plateau(joueur_1, joueur_2)) == NULL)
-        exit(1);
-
+    // Jouer
     jouer(plateau, interface, mode_jeu);
 
+    free(plateau);
+
     if (interface == GUI) {
-        MLV_wait_seconds(60);
+        MLV_wait_seconds(1200);
         MLV_free_window();
     }
 
@@ -399,6 +415,37 @@ void affiche_plateau_gui(Plateau plateau, Joueur j_courant) {
     MLV_actualise_window();
 }
 
+void affiche_gagnant(Plateau p, TYPE_I interface) {
+
+    int taille_f = taille_fenetre();
+    int padding_f = (taille_f * 5) / 100;
+    char message[300];
+    if (p.joueurs[0]->score == p.joueurs[1]->score) {
+        sprintf(message, "Egalité %d à %d.", p.joueurs[0]->score,
+                p.joueurs[1]->score);
+    } else if (p.joueurs[0]->score > p.joueurs[1]->score) {
+        sprintf(message, "Bravo %s, vous avez gagné %d à %d.", p.joueurs[0]->nom,
+                p.joueurs[0]->score, p.joueurs[1]->score);
+    } else {
+        sprintf(message, "Bravo %s, vous avez gagné %d à %d.", p.joueurs[1]->nom,
+                p.joueurs[1]->score, p.joueurs[0]->score);
+    }
+    if (interface == GUI) {
+
+        MLV_draw_text_box(padding_f, (taille_f * 20) / 100,
+                          taille_f - padding_f * 2, (taille_f * 20) / 100,
+                          message, 2, MLV_COLOR_BLACK, MLV_COLOR_BLACK,
+                          MLV_COLOR_WHITE, MLV_TEXT_LEFT, MLV_HORIZONTAL_CENTER,
+                          MLV_VERTICAL_CENTER);
+        MLV_actualise_window();
+
+    } else {
+        printf("%s", message);
+    }
+
+    printf("\n");
+}
+
 /************************** CLI ***********************************/
 void affiche_plateau_cli(Plateau plateau) {
     int i, j;
@@ -415,22 +462,11 @@ void affiche_plateau_cli(Plateau plateau) {
 
 /************************** Jeu ***********************************/
 
-/**
- * @brief Renvoie le nombre d'adverses adjacents à une case pour un symbole
- * donné.
- *
- * @param plateau
- * @param pi
- * @param pj
- * @param symbol
- * @return int
- */
 int valeur_case(Plateau plateau, int pi, int pj, char symbol) {
     int nbr_adverses = 0;
     // vérifications des pions adjacents
     for (int i = pi - 1; i <= pi + 1; i++) {
         for (int j = pj - 1; j <= pj + 1; j++) {
-
             if (plateau.plateau[i][j] != VIDE &&
                 plateau.plateau[i][j] != symbol &&
                 plateau.plateau[i][j] != BORD) {
@@ -438,16 +474,10 @@ int valeur_case(Plateau plateau, int pi, int pj, char symbol) {
             }
         }
     }
+
     return nbr_adverses;
 }
 
-/**
- * @brief Renvoie 0 si une condition d'arrêt de partie est vraie
- * sinon le jeu continue on renvoie 1.
- *
- * @param plateau
- * @param j_courant
- */
 int etat_partie(Plateau plateau, Joueur j_courant) {
     if (plateau.joueurs[0]->score == 0)
         return 0;
@@ -463,6 +493,7 @@ int etat_partie(Plateau plateau, Joueur j_courant) {
     // adjacent à une case libre
     int case_ok = 0;
     int c = 0;
+
     for (int i = 1; i < TAILLE_PLATEAU + 1; i++) {
         for (int j = 1; j < TAILLE_PLATEAU + 1; j++) {
             if (plateau.plateau[i][j] == VIDE) {
@@ -477,7 +508,7 @@ int etat_partie(Plateau plateau, Joueur j_courant) {
     return case_ok;
 }
 
-void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu) {
+void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu) {
     // indice du joueur courant
     int numj = 0;
     // pointeur sur le joueur courant;
@@ -486,15 +517,8 @@ void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu) {
     int i = -1, j = -1;
     // nombre de pions modifiés après placement d'un pion
     int pions_retournes = 0;
-
     // premier affichage du plateau
-    if (interface == GUI) {
-        init_fenetre();
-    } else {
-        printf("\n");
-        affiche_plateau(*p, *p->joueurs[0], interface);
-        printf("\n");
-    }
+
     int continuer = etat_partie(*p, *joueur);
     while (continuer) {
 
@@ -505,6 +529,7 @@ void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu) {
             // temps pour trouver une case trop long
             // surtout au début car trop de cases
             // pour tomber sur une bonne rapidement.
+
             i = random_int(1, TAILLE_PLATEAU);
             j = random_int(1, TAILLE_PLATEAU);
             faire_jouer(*joueur, &i, &j, interface);
@@ -523,6 +548,7 @@ void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu) {
             numj = (numj + 1) % 2;
             // mise à jour des points adverses
             p->joueurs[numj]->score -= pions_retournes;
+
             // affichage des scores
             if (interface == CLI) {
                 printf("Score actuel : %s(%c) %d", p->joueurs[0]->nom,
@@ -532,6 +558,7 @@ void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu) {
             }
             // on check le plateau seulement après avoir joué
             continuer = etat_partie(*p, *joueur);
+            printf("continuer : %d\n,", continuer);
         }
         // nous permet de metre en évidence
         // la case survolée
@@ -540,28 +567,7 @@ void jouer(Plateau *p, MODE_I interface, MODE_J mode_jeu) {
             MLV_wait_milliseconds(50);
         }
     }
-
-    // afficher gagants
-    int gagnant = -1, perdant = -1;
-
-    if (p->joueurs[0]->score == p->joueurs[1]->score) {
-        printf("Egalité %d à %d.", p->joueurs[0]->score, p->joueurs[1]->score);
-    } else if (p->joueurs[0]->score > p->joueurs[1]->score) {
-        gagnant = 0;
-        perdant = 1;
-    } else {
-        gagnant = 1;
-        perdant = 0;
-    }
-
-    if (interface == CLI) {
-
-    } else {
-        printf("Bravo %s, vous avez gagné %d à %d", p->joueurs[gagnant]->nom,
-               p->joueurs[gagnant]->score, p->joueurs[perdant]->score);
-    }
-
-    printf("\n");
+    affiche_gagnant(*p, interface);
 }
 
 Joueur *make_joueur(char nom[TAILLE_MAX_NOM], char symbol) {
@@ -633,7 +639,7 @@ Plateau *creer_plateau(Joueur *joueur_1, Joueur *joueur_2) {
     return plateau;
 }
 
-int faire_jouer(Joueur joueur, int *i, int *j, MODE_I interface) {
+int faire_jouer(Joueur joueur, int *i, int *j, TYPE_I interface) {
 
     if (interface == GUI) {
         if (MLV_get_mouse_button_state(MLV_BUTTON_LEFT) == MLV_PRESSED) {
@@ -643,9 +649,9 @@ int faire_jouer(Joueur joueur, int *i, int *j, MODE_I interface) {
         }
         return 0;
     }
-    printf(
-        "%s (%c), veuillez saisir les coordonnées où jouer (entre 1 et %d) : ",
-        joueur.nom, joueur.symbol, TAILLE_PLATEAU);
+    printf("%s (%c), veuillez saisir les coordonnées où jouer (entre 1 et "
+           "%d) : ",
+           joueur.nom, joueur.symbol, TAILLE_PLATEAU);
 
     int r = scanf("%d %d", i, j);
     if (r != 2) {
@@ -653,6 +659,64 @@ int faire_jouer(Joueur joueur, int *i, int *j, MODE_I interface) {
     }
 
     return r;
+}
+
+int init_jeu(Plateau **plateau, TYPE_I interface, MODE_J mode_jeu) {
+
+    Joueur *joueur_1 = NULL;
+    Joueur *joueur_2 = NULL;
+    char nom[TAILLE_MAX_NOM];
+    char message[200];
+
+    if (interface == GUI) {
+        init_fenetre();
+    }
+
+    switch (mode_jeu) {
+    // Humain vs Humain
+    case HH:
+        // input des noms dans le terminal
+        do {
+            sprintf(message, "Quel est le nom du premier joueur (symbol %c) : ",
+                    SYMBOL_1);
+            lire_nom(nom, TAILLE_MAX_NOM, interface, message);
+        } while ((joueur_1 = make_joueur(nom, SYMBOL_1)) == NULL);
+
+        do {
+            sprintf(message, "Quel est le nom du premier joueur (symbol %c) : ",
+                    SYMBOL_2);
+            lire_nom(nom, TAILLE_MAX_NOM, interface, message);
+        } while ((joueur_2 = make_joueur(nom, SYMBOL_2)) == NULL);
+
+        break;
+    // Humain vs Ordi
+    case HO:
+
+        do {
+
+            sprintf(message, "Quel est le nom du premier joueur (symbol %c) : ",
+                    SYMBOL_1);
+            lire_nom(nom, TAILLE_MAX_NOM, interface, message);
+        } while ((joueur_1 = make_joueur(nom, SYMBOL_1)) == NULL);
+
+        joueur_2 = make_joueur(NOM_ORDI, SYMBOL_2);
+
+        break;
+    default:
+        printf("Erreur. Aucun mode de jeu défini.");
+        return 0;
+    }
+
+    if ((*plateau = creer_plateau(joueur_1, joueur_2)) == NULL)
+        return 0;
+
+    if (interface == CLI) {
+        printf("\n");
+        affiche_plateau(*(*plateau), *(*plateau)->joueurs[0], interface);
+        printf("\n");
+    }
+
+    return 1;
 }
 
 /************************** Utils ***********************************/
@@ -663,23 +727,42 @@ void vider_buffer() {
         ;
 }
 
-int lire_clavier(char *dest, int taille) {
+int lire_nom(char *dest, int taille, TYPE_I interface, char *message) {
     char *cr = NULL;
-    if (fgets(dest, taille, stdin)) {
-        // on chercher le retour chariot
-        if ((cr = strchr(dest, '\n'))) {
-            *cr = '\0';
+    char *input = NULL;
+    int taille_f = taille_fenetre();
+    int padding_f = (taille_f * 5) / 100;
 
-        } else { // sinon il reste des char dans le buffer
-            vider_buffer();
+    if (interface == GUI) {
+
+        MLV_wait_input_box(padding_f, (taille_f * 20) / 100,
+                           taille_f - padding_f * 2, (taille_f * 20) / 100,
+                           MLV_COLOR_BLACK, MLV_COLOR_BLACK, MLV_COLOR_WHITE,
+                           message, &input);
+
+        // on limite le nombre de caractère
+        for (int i = 0; *input && i < TAILLE_MAX_NOM + 2; i++) {
+            dest[i] = input[i];
         }
-        return 1;
+    } else if (interface == CLI) {
+        printf("%s", message);
+        if (fgets(dest, taille, stdin)) {
+            // on chercher le retour chariot
+            if ((cr = strchr(dest, '\n'))) {
+                *cr = '\0';
+
+            } else { // sinon il reste des char dans le buffer
+                vider_buffer();
+            }
+            return 1;
+        }
+        vider_buffer();
     }
-    vider_buffer();
+
     return 0;
 }
 
-void affiche_plateau(Plateau plateau, Joueur j_courant, MODE_I interface) {
+void affiche_plateau(Plateau plateau, Joueur j_courant, TYPE_I interface) {
     switch (interface) {
     case CLI:
         affiche_plateau_cli(plateau);
@@ -694,3 +777,40 @@ void affiche_plateau(Plateau plateau, Joueur j_courant, MODE_I interface) {
 }
 
 int random_int(int min, int max) { return min + rand() % (max + 1 - min); }
+
+void options(TYPE_I *interface, MODE_J *mode_jeu, int argc, char *argv[]) {
+
+    /*           TRAITEMENT OPTIONS            */
+    // index de l'argument
+    int i = 1;
+    // pointeur sur la chaine de l'argument
+    char *str_option;
+    // iteration sur les arguments
+    for (; i < argc; i++) {
+        str_option = argv[i];
+        // si est une option
+        if (*str_option == '-') {
+            str_option++;
+            // iteration sur la chaine de l'argument
+            for (; *str_option; str_option++) {
+                // enregistre choix option
+                switch (*str_option) {
+                case 'a':
+                    *interface = CLI;
+                    break;
+                case 'g':
+                    *interface = GUI;
+                    break;
+                case 'h':
+                    *mode_jeu = HH;
+                    break;
+                case 'o':
+                    *mode_jeu = HO;
+                    break;
+                default:
+                    continue;
+                }
+            }
+        }
+    }
+}
