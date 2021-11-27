@@ -521,9 +521,6 @@ void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu) {
     int continuer = etat_partie(*p, *joueur);
     while (continuer) {
 
-        i = -1, j = -1;
-        joueur = p->joueurs[numj];
-
         if (mode_jeu == HO && (numj)) {
             // temps pour trouver une case trop long
             // surtout au début car trop de cases
@@ -555,9 +552,15 @@ void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu) {
                 printf(" - %s(%c) %d\n\n", p->joueurs[1]->nom,
                        p->joueurs[1]->symbol, p->joueurs[1]->score);
             }
+            // remise à zero des indices de case
+            i = -1, j = -1;
+            // changement de joueur
+            joueur = p->joueurs[numj];
             // on check le plateau seulement après avoir joué
+            // et changé de joueur
+            // et pas dans la condition du while pour éviter de tester
+            // chaque case toute les 50 ms (c'est beaucoup trop)
             continuer = etat_partie(*p, *joueur);
-            printf("continuer : %d\n,", continuer);
         }
         // nous permet de metre en évidence
         // la case survolée
