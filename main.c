@@ -13,7 +13,7 @@
 #include <string.h>
 #include <time.h>
 
-#define TAILLE_PLATEAU 4
+#define TAILLE_PLATEAU 7
 #define TAILLE_MAX_NOM 20
 #define SYMBOL_1 'o'
 #define SYMBOL_2 'x'
