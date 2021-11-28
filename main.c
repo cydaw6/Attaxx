@@ -440,9 +440,10 @@ void affiche_gagnant(Plateau p, TYPE_I interface) {
 
     } else {
         printf("%s", message);
+        printf("\n");
     }
 
-    printf("\n");
+    
 }
 
 /************************** CLI ***********************************/
