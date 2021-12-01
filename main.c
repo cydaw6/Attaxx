@@ -311,7 +311,6 @@ int coordonees_vers_indices(int souris_x, int souris_y, int *ci, int *cj) {
     return 0;
 }
 
-// TODO : afficher les score sur la fenetre
 void affiche_scores(Joueur gagnant, Joueur perdant) { ; }
 
 void affiche_plateau_gui(Plateau plateau, Joueur j_courant) {
@@ -440,10 +439,7 @@ void affiche_gagnant(Plateau p, TYPE_I interface) {
 
     } else {
         printf("%s", message);
-        printf("\n");
     }
-
-    
 }
 
 /************************** CLI ***********************************/
@@ -538,6 +534,7 @@ void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu) {
         // si le joueur parviens à placer un pion
         if ((pions_retournes = ajouter_pion(p, i, j, joueur->symbol)) != 0) {
             // reaffichage du plateau
+            printf("\n");
             affiche_plateau(*p, *joueur, interface);
             // mise à jour des points
             joueur->score += pions_retournes + 1;
@@ -652,7 +649,7 @@ int faire_jouer(Joueur joueur, int *i, int *j, TYPE_I interface) {
         }
         return 0;
     }
-    printf("%s (%c), veuillez saisir les coordonnées où jouer (entre 1 et "
+    printf("\n%s (%c), veuillez saisir les coordonnées où jouer (entre 1 et "
            "%d) : ",
            joueur.nom, joueur.symbol, TAILLE_PLATEAU);
 
@@ -686,7 +683,7 @@ int init_jeu(Plateau **plateau, TYPE_I interface, MODE_J mode_jeu) {
         } while ((joueur_1 = make_joueur(nom, SYMBOL_1)) == NULL);
 
         do {
-            sprintf(message, "Quel est le nom du premier joueur (symbol %c) : ",
+            sprintf(message, "\nQuel est le nom du second joueur (symbol %c) : ",
                     SYMBOL_2);
             lire_nom(nom, TAILLE_MAX_NOM, interface, message);
         } while ((joueur_2 = make_joueur(nom, SYMBOL_2)) == NULL);
@@ -714,9 +711,8 @@ int init_jeu(Plateau **plateau, TYPE_I interface, MODE_J mode_jeu) {
         return 0;
 
     if (interface == CLI) {
-        printf("\n");
+        printf("\n\n");
         affiche_plateau(*(*plateau), *(*plateau)->joueurs[0], interface);
-        printf("\n");
     }
 
     return 1;

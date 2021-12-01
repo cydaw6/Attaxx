@@ -1,0 +1,28 @@
+Quel est le nom du premier joueur (symbol o) : 
+Quel est le nom du second joueur (symbol x) : 
+
+* * * * * 
+* x . o * 
+* . . . * 
+* o . x * 
+* * * * * 
+
+antoine (o), veuillez saisir les coordonnées où jouer (entre 1 et 3) : 
+antoine (o), veuillez saisir les coordonnées où jouer (entre 1 et 3) : 
+* * * * * 
+* o o o * 
+* . . . * 
+* o . x * 
+* * * * * 
+Score actuel : antoine(o) 4 - Ramzi(x) 1
+
+
+Ramzi (x), veuillez saisir les coordonnées où jouer (entre 1 et 3) : 
+* * * * * 
+* x x x * 
+* . x . * 
+* x . x * 
+* * * * * 
+Score actuel : antoine(o) 0 - Ramzi(x) 6
+
+Bravo Ramzi, vous avez gagné 6 à 0.
