@@ -525,7 +525,6 @@ void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu) {
 
             i = random_int(1, TAILLE_PLATEAU);
             j = random_int(1, TAILLE_PLATEAU);
-            faire_jouer(*joueur, &i, &j, interface);
             MLV_wait_milliseconds(150);
         } else {
             faire_jouer(*joueur, &i, &j, interface);
