@@ -533,7 +533,9 @@ void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu) {
         // si le joueur parviens à placer un pion
         if ((pions_retournes = ajouter_pion(p, i, j, joueur->symbol)) != 0) {
             // reaffichage du plateau
-            printf("\n");
+            if(interface == CLI){
+            	printf("\n");
+            }
             affiche_plateau(*p, *joueur, interface);
             // mise à jour des points
             joueur->score += pions_retournes + 1;
