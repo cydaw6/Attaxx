@@ -229,7 +229,14 @@ void options(TYPE_I *interface, MODE_J *mode_jeu, int argc, char *argv[]);
  * @param mode_jeu le mode de jeu
  * @return int 0 si le plateau n'a pas pu être alloué
  */
+ 
 int init_jeu(Plateau **plateau, TYPE_I interface, MODE_J mode_jeu);
+
+/**
+ * @brief determine si un point est infecter ou non, avec un pourcentage de 60%
+ * 
+ */
+int infectionAleatoire ()
 
 int main(int argc, char *argv[]) {
     srand(time(NULL));
@@ -585,6 +592,13 @@ Joueur *make_joueur(char nom[TAILLE_MAX_NOM], char symbol) {
     return NULL;
 }
 
+int InfectionAleatoire(){
+    proba = rand() % 11;
+
+    if(proba > 6) return 0;
+    else return 1;
+}
+
 int ajouter_pion(Plateau *plateau, int pi, int pj, char symbol) {
 
     if (pi < 0 || pj < 0 || pi > TAILLE_PLATEAU || pj > TAILLE_PLATEAU ||
@@ -597,7 +611,8 @@ int ajouter_pion(Plateau *plateau, int pi, int pj, char symbol) {
         for (j = pj - 1; j <= pj + 1; j++) {
             if (plateau->plateau[i][j] != VIDE &&
                 plateau->plateau[i][j] != BORD &&
-                plateau->plateau[i][j] != symbol) {
+                plateau->plateau[i][j] != symbol) && 
+                InfectionAleatoire() == 1 {
                 plateau->plateau[i][j] = symbol;
                 nbr_adverses += 1;
             }
