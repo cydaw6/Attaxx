@@ -238,6 +238,17 @@ int init_jeu(Plateau **plateau, TYPE_I interface, MODE_J mode_jeu);
  */
 int infectionAleatoire ()
 
+/**
+ * @brief compte le nombre d'adversaire autour d'une case 
+ * 
+ * @param plateau 
+ * @param pi 
+ * @param pj 
+ * @param symbol 
+ * @return int le nombre d'adversaire atour d'une case
+ */
+int compteAdversaire(Plateau *plateau, int pi, int pj, char symbol)
+
 int main(int argc, char *argv[]) {
     srand(time(NULL));
     Plateau *plateau = NULL;
@@ -515,6 +526,21 @@ int etat_partie(Plateau plateau, Joueur j_courant) {
     return case_ok;
 }
 
+int compteAdversaire(Plateau *plateau, int pi, int pj, char symbol){
+    int i, j, nbr_adverses;
+    for (i = pi - 1; i <= pi + 1; i++) {
+        for (j = pj - 1; j <= pj + 1; j++) {
+            if (plateau->plateau[i][j] != VIDE &&
+                plateau->plateau[i][j] != BORD &&
+                plateau->plateau[i][j] != symbol) {
+                plateau->plateau[i][j] = symbol;
+                nbr_adverses += 1;
+            }
+        }
+    }
+    return nbr_adverses;
+}
+
 void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu) {
     // indice du joueur courant
     int numj = 0;
@@ -522,6 +548,10 @@ void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu) {
     Joueur *joueur = p->joueurs[numj];
     // coordonées de la case
     int i = -1, j = -1;
+    // coordonnées de la case pour l'ordinateur
+    int a, o;
+    // compteur autour d'une case et coordonée de celle avec le plus d'adversaire autour
+    int max, nb_adver, l, c;
     // nombre de pions modifiés après placement d'un pion
     int pions_retournes = 0;
     // premier affichage du plateau
@@ -534,10 +564,28 @@ void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu) {
             // surtout au début car trop de cases
             // pour tomber sur une bonne rapidement.
 
-            i = random_int(1, TAILLE_PLATEAU);
-            j = random_int(1, TAILLE_PLATEAU);
+           for(a=1; a < TAILLE_PLATEAU; a++){
+                for(o=1; o < TAILLE_PLATEAU; o++){
+
+                    if (p->plateau[a][o] == p->joueurs[0]->symbol){
+                        for(l= a-1; i <= a+1; i++){
+                            for(c=o-1; j <= o+1; j++){
+                                //if(p->plateau[l][c] == VIDE){
+                                    nb_adver = compteAdversaire(p, l, c, p->joueurs[1]->symbol);
+                                    if (nb_adver > max){
+                                        max = nb_adver;
+                                        i = l;
+                                        j = c;
+                                    }
+                                //}
+                            }
+                            
+                        }
+
+                    }
+                }
+            }
             faire_jouer(*joueur, &i, &j, interface);
-            MLV_wait_milliseconds(150);
         } else {
             faire_jouer(*joueur, &i, &j, interface);
         }
