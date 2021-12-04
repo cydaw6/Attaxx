@@ -567,11 +567,11 @@ void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu) {
            for(a=1; a < TAILLE_PLATEAU; a++){
                 for(o=1; o < TAILLE_PLATEAU; o++){
 
-                    if (p->plateau[a][o] == p->joueurs[0]->symbol){
+                    if (p->plateau[a][o] == p->joueurs[1]->symbol){
                         for(l= a-1; i <= a+1; i++){
                             for(c=o-1; j <= o+1; j++){
                                 //if(p->plateau[l][c] == VIDE){
-                                    nb_adver = compteAdversaire(p, l, c, p->joueurs[1]->symbol);
+                                    nb_adver = compteAdversaire(p, l, c, p->joueurs[0]->symbol);
                                     if (nb_adver > max){
                                         max = nb_adver;
                                         i = l;
