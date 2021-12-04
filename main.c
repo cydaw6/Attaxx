@@ -229,25 +229,25 @@ void options(TYPE_I *interface, MODE_J *mode_jeu, int argc, char *argv[]);
  * @param mode_jeu le mode de jeu
  * @return int 0 si le plateau n'a pas pu être alloué
  */
- 
+
 int init_jeu(Plateau **plateau, TYPE_I interface, MODE_J mode_jeu);
 
 /**
  * @brief determine si un point est infecter ou non, avec un pourcentage de 60%
- * 
+ *
  */
-int infectionAleatoire ()
+int infectionAleatoire();
 
 /**
- * @brief compte le nombre d'adversaire autour d'une case 
- * 
- * @param plateau 
- * @param pi 
- * @param pj 
- * @param symbol 
+ * @brief compte le nombre d'adversaire autour d'une case
+ *
+ * @param plateau
+ * @param pi
+ * @param pj
+ * @param symbol
  * @return int le nombre d'adversaire atour d'une case
  */
-int compteAdversaire(Plateau *plateau, int pi, int pj, char symbol)
+int compteAdversaire(Plateau *plateau, int pi, int pj, char symbol);
 
 int main(int argc, char *argv[]) {
     srand(time(NULL));
@@ -328,9 +328,6 @@ int coordonees_vers_indices(int souris_x, int souris_y, int *ci, int *cj) {
     }
     return 0;
 }
-
-// TODO : afficher les score sur la fenetre
-void affiche_scores(Joueur gagnant, Joueur perdant) { ; }
 
 void affiche_plateau_gui(Plateau plateau, Joueur j_courant) {
 
@@ -460,8 +457,6 @@ void affiche_gagnant(Plateau p, TYPE_I interface) {
         printf("%s", message);
         printf("\n");
     }
-
-    
 }
 
 /************************** CLI ***********************************/
@@ -526,20 +521,25 @@ int etat_partie(Plateau plateau, Joueur j_courant) {
     return case_ok;
 }
 
-int compteAdversaire(Plateau *plateau, int pi, int pj, char symbol){
-    int i, j, nbr_adverses;
-    for (i = pi - 1; i <= pi + 1; i++) {
-        for (j = pj - 1; j <= pj + 1; j++) {
-            if (plateau->plateau[i][j] != VIDE &&
-                plateau->plateau[i][j] != BORD &&
-                plateau->plateau[i][j] != symbol) {
-                plateau->plateau[i][j] = symbol;
-                nbr_adverses += 1;
-            }
-        }
-    }
-    return nbr_adverses;
-}
+// La fonction valeur_case existait déjà
+//
+// Et ici la fonction ici modifie la case alors qu'on souhaite juste
+// connaître sa valeur = le gain potentiel quelle peu engendrer
+//
+// int compteAdversaire(Plateau *plateau, int pi, int pj, char symbol) {
+//     int i, j, nbr_adverses = 0;
+//     for (i = pi - 1; i <= pi + 1; i++) {
+//         for (j = pj - 1; j <= pj + 1; j++) {
+//             if (plateau->plateau[i][j] != VIDE &&
+//                 plateau->plateau[i][j] != BORD &&
+//                 plateau->plateau[i][j] != symbol) {
+//                 plateau->plateau[i][j] = symbol;
+//                 nbr_adverses += 1;
+//             }
+//         }
+//     }
+//     return nbr_adverses;
+// }
 
 void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu) {
     // indice du joueur courant
@@ -548,10 +548,8 @@ void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu) {
     Joueur *joueur = p->joueurs[numj];
     // coordonées de la case
     int i = -1, j = -1;
-    // coordonnées de la case pour l'ordinateur
-    int a, o;
-    // compteur autour d'une case et coordonée de celle avec le plus d'adversaire autour
-    int max, nb_adver, l, c;
+    // sert à la détermination de la case la plus aventageuse pour l'ordi
+    int max = 0, valcase = 0;
     // nombre de pions modifiés après placement d'un pion
     int pions_retournes = 0;
     // premier affichage du plateau
@@ -560,32 +558,24 @@ void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu) {
     while (continuer) {
 
         if (mode_jeu == HO && (numj)) {
-            // temps pour trouver une case trop long
-            // surtout au début car trop de cases
-            // pour tomber sur une bonne rapidement.
 
-           for(a=1; a < TAILLE_PLATEAU; a++){
-                for(o=1; o < TAILLE_PLATEAU; o++){
-
-                    if (p->plateau[a][o] == p->joueurs[0]->symbol){
-                        for(l= a-1; i <= a+1; i++){
-                            for(c=o-1; j <= o+1; j++){
-                                //if(p->plateau[l][c] == VIDE){
-                                    nb_adver = compteAdversaire(p, l, c, p->joueurs[1]->symbol);
-                                    if (nb_adver > max){
-                                        max = nb_adver;
-                                        i = l;
-                                        j = c;
-                                    }
-                                //}
-                            }
-                            
+            // faudrait mettre ça dans une fonction
+            // ça marchait pas parce que aussi car le max n'étais pas remis à
+            // zéro après la pose d'un pion
+            for (int a = 1; a < TAILLE_PLATEAU + 1; a++) {
+                for (int o = 1; o < TAILLE_PLATEAU + 1; o++) {
+                    if (p->plateau[a][o] == VIDE) {
+                        valcase = valeur_case(*p, a, o, joueur->symbol);
+                        if (max < valcase) {
+                            i = a;
+                            j = o;
+                            max = valcase;
                         }
-
                     }
                 }
             }
-            faire_jouer(*joueur, &i, &j, interface);
+            MLV_wait_milliseconds(
+                250); // on temporise sinon on voit pas ce qu'il se passe
         } else {
             faire_jouer(*joueur, &i, &j, interface);
         }
@@ -610,6 +600,7 @@ void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu) {
             }
             // remise à zero des indices de case
             i = -1, j = -1;
+            max = 0;
             // changement de joueur
             joueur = p->joueurs[numj];
             // on check le plateau seulement après avoir joué
@@ -640,11 +631,13 @@ Joueur *make_joueur(char nom[TAILLE_MAX_NOM], char symbol) {
     return NULL;
 }
 
-int InfectionAleatoire(){
-    proba = rand() % 11;
+int InfectionAleatoire() {
+    int proba = rand() % 11;
 
-    if(proba > 6) return 0;
-    else return 1;
+    if (proba > 6)
+        return 0;
+    else
+        return 1;
 }
 
 int ajouter_pion(Plateau *plateau, int pi, int pj, char symbol) {
@@ -659,8 +652,7 @@ int ajouter_pion(Plateau *plateau, int pi, int pj, char symbol) {
         for (j = pj - 1; j <= pj + 1; j++) {
             if (plateau->plateau[i][j] != VIDE &&
                 plateau->plateau[i][j] != BORD &&
-                plateau->plateau[i][j] != symbol) && 
-                InfectionAleatoire() == 1 {
+                plateau->plateau[i][j] != symbol && InfectionAleatoire()) {
                 plateau->plateau[i][j] = symbol;
                 nbr_adverses += 1;
             }
