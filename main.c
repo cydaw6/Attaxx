@@ -13,7 +13,7 @@
 #include <string.h>
 #include <time.h>
 
-#define TAILLE_PLATEAU 3
+#define TAILLE_PLATEAU 7
 #define TAILLE_MAX_NOM 20
 #define SYMBOL_1 'o'
 #define SYMBOL_2 'x'
@@ -465,8 +465,8 @@ void affiche_gagnant(Plateau p, TYPE_I interface) {
         MLV_actualise_window();
 
     } else {
-        printf("%s", message);
         printf("\n");
+        printf("%s", message);
     }
 }
 
@@ -587,7 +587,7 @@ void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu, int opts[MAX_OPTS]) {
             if (interface == CLI) {
                 printf("Score actuel : %s(%c) %d", p->joueurs[0]->nom,
                        p->joueurs[0]->symbol, p->joueurs[0]->score);
-                printf(" - %s(%c) %d\n\n", p->joueurs[1]->nom,
+                printf(" - %s(%c) %d\n", p->joueurs[1]->nom,
                        p->joueurs[1]->symbol, p->joueurs[1]->score);
             }
             // remise à zero des indices de case
@@ -768,9 +768,8 @@ int init_jeu(Plateau **plateau, TYPE_I interface, MODE_J mode_jeu) {
         return 0;
 
     if (interface == CLI) {
-        printf("\n");
+        printf("\n\n");
         affiche_plateau(*(*plateau), *(*plateau)->joueurs[0], interface);
-        printf("\n");
     }
 
     return 1;
