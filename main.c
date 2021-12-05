@@ -22,6 +22,7 @@
 #define NOM_ORDI "Ordi"
 #define BACKGROUND_COLOR MLV_COLOR_WHITE
 #define PADDING_CASE 1
+#define MAX_OPTS 10
 
 /**
  * @brief Pourcentage du côté le plus petit
@@ -42,6 +43,12 @@ typedef enum { CLI = 0, GUI = 1 } TYPE_I;
  * Humain vs Ordi.
  */
 typedef enum { HH = 0, HO = 1 } MODE_J;
+
+/**
+ * @brief options du mode de jeu.
+ * I : probabilité d'infection de
+ */
+typedef enum { I = 0 } OPTS;
 
 /**
  * @brief Représentation d'un joueur.
@@ -107,7 +114,8 @@ void affiche_plateau(Plateau plateau, Joueur j_courant, TYPE_I interface);
  * @param symbol le symbole à placer.
  * @return int retourne le nombre de pions adverses affectés @param symbol
  */
-int ajouter_pion(Plateau *plateau, int pi, int pj, char symbol);
+int ajouter_pion(Plateau *plateau, int pi, int pj, char symbol,
+                 int opts[MAX_OPTS]);
 
 /**
  * @brief Vide le buffer de l'entrée standard
@@ -142,7 +150,7 @@ int faire_jouer(Joueur joueur, int *i, int *j, TYPE_I interface);
  * @param interface Le type d'interface.
  * @param mode_jeu Le mode_jeu.
  */
-void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu);
+void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu, int opts[MAX_OPTS]);
 
 /**
  * @brief Alloue une structure joueur.
@@ -218,7 +226,8 @@ int etat_partie(Plateau plateau, Joueur j_courant);
  * @param argc nombre d'arguments
  * @param argv tableau des chaine d'arguments
  */
-void options(TYPE_I *interface, MODE_J *mode_jeu, int argc, char *argv[]);
+void options(TYPE_I *interface, MODE_J *mode_jeu, int *opts, int argc,
+             char *argv[]);
 
 /**
  * @brief Alloue les différentes structure du jeu
@@ -256,9 +265,11 @@ int main(int argc, char *argv[]) {
     TYPE_I interface = CLI;
     // par défaut humain vs ordi
     MODE_J mode_jeu = HO;
+    // options du jeu
+    int opts[MAX_OPTS] = {0};
 
     // Options
-    options(&interface, &mode_jeu, argc, argv);
+    options(&interface, &mode_jeu, opts, argc, argv);
 
     // Initialiser le jeu
     if (init_jeu(&plateau, interface, mode_jeu) == 0) {
@@ -266,7 +277,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Jouer
-    jouer(plateau, interface, mode_jeu);
+    jouer(plateau, interface, mode_jeu, opts);
 
     free(plateau);
 
@@ -468,7 +479,6 @@ void affiche_plateau_cli(Plateau plateau) {
             printf("%c", plateau.plateau[i][j]);
             printf(" ");
         }
-        // printf(" "); // espace invisible fin de ligne !
         printf("\n");
     }
 }
@@ -513,7 +523,6 @@ int etat_partie(Plateau plateau, Joueur j_courant) {
                 // vérifications des pions adjacents
                 c = valeur_case(plateau, i, j, j_courant.symbol);
                 case_ok += c;
-                // printf("CASE %d: %d: %d\n", i, j, c);
             }
         }
     }
@@ -521,27 +530,7 @@ int etat_partie(Plateau plateau, Joueur j_courant) {
     return case_ok;
 }
 
-// La fonction valeur_case existait déjà
-//
-// Et ici la fonction ici modifie la case alors qu'on souhaite juste
-// connaître sa valeur = le gain potentiel quelle peu engendrer
-//
-// int compteAdversaire(Plateau *plateau, int pi, int pj, char symbol) {
-//     int i, j, nbr_adverses = 0;
-//     for (i = pi - 1; i <= pi + 1; i++) {
-//         for (j = pj - 1; j <= pj + 1; j++) {
-//             if (plateau->plateau[i][j] != VIDE &&
-//                 plateau->plateau[i][j] != BORD &&
-//                 plateau->plateau[i][j] != symbol) {
-//                 plateau->plateau[i][j] = symbol;
-//                 nbr_adverses += 1;
-//             }
-//         }
-//     }
-//     return nbr_adverses;
-// }
-
-void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu) {
+void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu, int opts[MAX_OPTS]) {
     // indice du joueur courant
     int numj = 0;
     // pointeur sur le joueur courant;
@@ -557,11 +546,10 @@ void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu) {
     int continuer = etat_partie(*p, *joueur);
     while (continuer) {
 
-        if (mode_jeu == HO && (numj)) {
+        if (mode_jeu == HO &&
+            (numj)) { // si mode de jeu HvsO et le joueur est l'ordi
 
             // faudrait mettre ça dans une fonction
-            // ça marchait pas parce que aussi car le max n'étais pas remis à
-            // zéro après la pose d'un pion
             for (int a = 1; a < TAILLE_PLATEAU + 1; a++) {
                 for (int o = 1; o < TAILLE_PLATEAU + 1; o++) {
                     if (p->plateau[a][o] == VIDE) {
@@ -581,7 +569,8 @@ void jouer(Plateau *p, TYPE_I interface, MODE_J mode_jeu) {
         }
 
         // si le joueur parviens à placer un pion
-        if ((pions_retournes = ajouter_pion(p, i, j, joueur->symbol)) != 0) {
+        if ((pions_retournes = ajouter_pion(p, i, j, joueur->symbol, opts)) !=
+            0) {
             // reaffichage du plateau
             affiche_plateau(*p, *joueur, interface);
             // mise à jour des points
@@ -640,7 +629,8 @@ int InfectionAleatoire() {
         return 1;
 }
 
-int ajouter_pion(Plateau *plateau, int pi, int pj, char symbol) {
+int ajouter_pion(Plateau *plateau, int pi, int pj, char symbol,
+                 int opts[MAX_OPTS]) {
 
     if (pi < 0 || pj < 0 || pi > TAILLE_PLATEAU || pj > TAILLE_PLATEAU ||
         plateau->plateau[pi][pj] != VIDE)
@@ -652,8 +642,14 @@ int ajouter_pion(Plateau *plateau, int pi, int pj, char symbol) {
         for (j = pj - 1; j <= pj + 1; j++) {
             if (plateau->plateau[i][j] != VIDE &&
                 plateau->plateau[i][j] != BORD &&
-                plateau->plateau[i][j] != symbol && InfectionAleatoire()) {
-                plateau->plateau[i][j] = symbol;
+                plateau->plateau[i][j] != symbol) {
+                if (opts[I]) {
+                    if (InfectionAleatoire()) {
+                        plateau->plateau[i][j] = symbol;
+                    }
+                } else {
+                    plateau->plateau[i][j] = symbol;
+                }
                 nbr_adverses += 1;
             }
         }
@@ -836,7 +832,8 @@ void affiche_plateau(Plateau plateau, Joueur j_courant, TYPE_I interface) {
 
 int random_int(int min, int max) { return min + rand() % (max + 1 - min); }
 
-void options(TYPE_I *interface, MODE_J *mode_jeu, int argc, char *argv[]) {
+void options(TYPE_I *interface, MODE_J *mode_jeu, int *opts, int argc,
+             char *argv[]) {
 
     /*           TRAITEMENT OPTIONS            */
     // index de l'argument
@@ -865,6 +862,8 @@ void options(TYPE_I *interface, MODE_J *mode_jeu, int argc, char *argv[]) {
                 case 'o':
                     *mode_jeu = HO;
                     break;
+                case 'i':
+                    opts[I] = 1;
                 default:
                     continue;
                 }
